@@ -1,9 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <standard_types.h>
-// #include <stdint.h>
 
-#include <glfw/glfw3.h>
 #include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 int main(){
     if (!glfwInit()){
