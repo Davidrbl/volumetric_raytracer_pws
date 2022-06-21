@@ -10,11 +10,26 @@ OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
 DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
 BIN ?= main
 
+ifeq ($(CC),cc)
 CC := clang
-CPPFLAGS += -I$(INCDIR) $(shell pkg-config --cflags-only-I glfw3)
-CFLAGS += -Wall -Wextra -Wpedantic -march=native -pipe -std=c17 -O3 -flto=thin \
-	$(shell pkg-config --cflags-only-other glfw3)
-LDFLAGS += -fuse-ld=lld $(shell pkg-config --libs glfw3)
+endif
+
+CPPFLAGS := -I$(INCDIR) $(shell pkg-config --cflags-only-I glfw3) $(CPPFLAGS)
+CFLAGS := -Wall -Wextra -Wpedantic -march=native -pipe -std=c17 \
+          $(shell pkg-config --cflags-only-other glfw3) $(CFLAGS)
+LDFLAGS := -fuse-ld=lld $(shell pkg-config --libs glfw3) $(LDFLAGS)
+
+DEBUGFLAGS ?= -g -glldb -fsanitize=undefined,address
+DEBUGOPTIFLAGS ?= $(DEBUGFLAGS) -flto=thin -O2
+OPTIFLAGS ?= -flto=thin -O3
+
+ifeq ($(MODE),debug)
+CFLAGS += $(DEBUGFLAGS)
+else ifeq ($(MODE),debugopti)
+CFLAGS += $(DEBUGOPTIFLAGS)
+else ifeq ($(MODE),opti)
+CFLAGS += $(OPTIFLAGS)
+endif
 
 all: $(BIN)
 
