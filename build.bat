@@ -1,0 +1,1 @@
+gcc src/main.c glfw3.dll -o main.exe -I include
