@@ -1,3 +1,5 @@
 /main*
 /dep/
 /obj/
+/glfw3.dll
+/include/glfw/
