@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-// #include <stdint.h>
-
-#include <standard_types.h>
 
 #include <glad/gl.h>
+
+#include <shader.h>
+#include <standard_types.h>
 
 void create_shader(const char* path, GLenum type, GLint* dest){
     *dest = glCreateShader(type);

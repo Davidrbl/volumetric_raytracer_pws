@@ -46,7 +46,7 @@ int main() {
     }
 
     // Shader program setup
-    u32 main_program;
+    GLint main_program;
     create_program3s(
         "src/shaders/main.vert",
         "src/shaders/main.geom",
