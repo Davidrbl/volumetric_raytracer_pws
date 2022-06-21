@@ -6,6 +6,7 @@
 #include <glad/gl.h>
 
 #include <standard_types.h>
+#include <shader.h>
 
 #define GL_VERSION_MAJOR 4
 #define GL_VERSION_MINOR 6
@@ -44,8 +45,22 @@ int main() {
         return 3;
     }
 
+    // Shader program setup
+    u32 main_program;
+    create_program3s(
+        "src/shaders/main.vert",
+        "src/shaders/main.geom",
+        "src/shaders/main.frag",
+        &main_program
+    );
+
     while(!glfwWindowShouldClose(window)){
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(main_program);
+        glDrawArrays(GL_POINTS, 0, 1);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
