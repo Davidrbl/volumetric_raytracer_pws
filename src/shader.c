@@ -42,6 +42,8 @@ void create_shader(const char* path, GLenum type, GLint* dest){
         fprintf(stderr, "SHADER COMPILE ERROR: %s\n%s\n", path, error_string);
         exit(1);
     }
+
+    free(source);
 }
 
 void create_program2s(const char* vertex_shader_path, const char* fragment_shader_path, GLint* dest){
