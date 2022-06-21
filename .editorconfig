@@ -1,0 +1,21 @@
+root = yes
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+
+[*.{c,h,sh,py,yml}]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[{Makefile,GNUmakefile}]
+indent_style = tab
+trim_trailing_whitespace = true
+
+[**/libs/**]
+indent_style = unset
+indent_size = unset
+tab_width = unset
+trim_trailing_whitespace = unset
