@@ -27,8 +27,8 @@ int main(){
     }
 
     while(!glfwWindowShouldClose(window)){
-        
-        
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
+
         glfwPollEvents();
         glfwSwapBuffers(window);
     }

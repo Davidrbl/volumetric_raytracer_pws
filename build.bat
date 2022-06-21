@@ -1,1 +1,1 @@
-gcc src/main.c glfw3.dll -o main.exe -I include
+gcc src/main.c src/gl.c glfw3.dll -o main.exe -I include
