@@ -7,6 +7,7 @@
 #include <glad/gl.h>
 
 #include <standard_types.h>
+#include <texture.h>
 #include <shader.h>
 
 #define GL_VERSION_MAJOR 4
@@ -24,6 +25,10 @@ static void error_callback(int error, const char* description) {
 
 static void framebuffer_resize_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
+}
+
+u8 texture_function(float x, float y, float z){
+    return 0;
 }
 
 void GLAPIENTRY gl_error_callback(
@@ -118,6 +123,9 @@ int main() {
     float time_begin;
     u64 frame = 1;
 
+    u32 cube_density_texture;
+    create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
+
     float cam_pos[3] = {0.0, 0.0, 0.0};
     float cam_rot[2] = {0.0, 0.0};
     float cam_for[3] = {0.0, 0.0, 1.0};
@@ -126,6 +134,7 @@ int main() {
     // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_x);
 
     while(!glfwWindowShouldClose(window)){
+
         calc_movement(window, cam_pos, cam_rot, prev_mouse_x, prev_mouse_y);
         // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_y);
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
