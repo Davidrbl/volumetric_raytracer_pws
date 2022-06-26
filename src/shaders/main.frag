@@ -4,8 +4,9 @@ layout (location = 0) out vec4 FragColor;
 
 in FRAG_IN {
     vec2 uv;
-    vec3 dir;
-    vec2 pny;
+    mat3 rot;
+    // vec3 dir;
+    // vec2 pny;
 } frag_in;
 
 struct HitResult {
@@ -17,6 +18,7 @@ struct HitResult {
 
 uniform vec3 cam_origin;
 uniform vec2 rotation; // x pitch, y yaw
+uniform vec3 cam_for;
 
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim){
     HitResult result;
@@ -211,9 +213,34 @@ void main(){
     //     cos(yaw) * d
     // );
 
-    vec3 frag_dir = normalize(frag_in.dir);
+    // mat3 cam_rot;
+
+    // vec3 forward = cam_for;
+    // vec3 up = vec3(0.0, 1.0, 0.0);
+    // vec3 right = cross(forward, up);
+    // right = normalize(right);
+
+    // up = cross(right, forward);
+
+    // // First row
+    // cam_rot[0][0] = right.x;
+    // cam_rot[1][0] = right.y;
+    // cam_rot[2][0] = right.z;
+
+    // // Second row
+    // cam_rot[0][1] = up.x;
+    // cam_rot[1][1] = up.y;
+    // cam_rot[2][1] = up.z;
+
+    // // Third row
+    // cam_rot[0][2] = forward.x;
+    // cam_rot[1][2] = forward.y;
+    // cam_rot[2][2] = forward.z;
+
+    // vec3 frag_dir = normalize(frag_in.dir);
     vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
     ray_dir = normalize(ray_dir);
+    ray_dir = ray_dir * frag_in.rot;
     // Take camera rotation into account, by rotation matrix or another way
     // HitResult hit = intersect(cam_origin, actual_dir);
     // HitResult hit = intersect(cam_origin, frag_dir);
@@ -223,8 +250,6 @@ void main(){
 
     if (hit.valid && hit.result.y > 0.0) col = vec3((hit.result.y - hit.result.x)/2) + 0.2;
 
-    // FragColor = vec4(frag_in.uv, 0.0, 1.0);
-    FragColor = vec4(vec3(length(frag_dir)), 1.0);
     FragColor = vec4(col, 1.0);
-    // FragColor = vec4(frag_in.pny-vec2(pitch, yaw), 0.0, 1.0);
+    // FragColor = vec4(ray_dir, 1.0);
 }

@@ -55,27 +55,27 @@ void calc_movement(GLFWwindow* window, float* orig, float* rotation, float prev_
     // rotation[0] += cur_mouse_y * MOUSE_SENSITIVITY;
     // rotation[1] += cur_mouse_x * MOUSE_SENSITIVITY;
 
-    rotation[1] += (glfwGetKey(window, GLFW_KEY_I) - glfwGetKey(window, GLFW_KEY_K))
+    rotation[0] += (glfwGetKey(window, GLFW_KEY_I) - glfwGetKey(window, GLFW_KEY_K))
                      * MOUSE_SENSITIVITY * 0.01;
-    rotation[0] += (glfwGetKey(window, GLFW_KEY_L) - glfwGetKey(window, GLFW_KEY_J))
+    rotation[1] += (glfwGetKey(window, GLFW_KEY_L) - glfwGetKey(window, GLFW_KEY_J))
                      * MOUSE_SENSITIVITY * 0.01;
 
-    if (rotation[1] >  0.49*PI) rotation[1] =  0.49*PI;
-    if (rotation[1] < -0.49*PI) rotation[1] = -0.49*PI;
+    if (rotation[0] >  0.49*PI) rotation[0] =  0.49*PI;
+    if (rotation[0] < -0.49*PI) rotation[0] = -0.49*PI;
 
     float mul;
 
     // W and S
     mul = glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S);
 
-    orig[0] += sin(-rotation[0]) * mul * CAMERA_SPEED;
-    orig[2] += cos(-rotation[0]) * mul * CAMERA_SPEED;
+    orig[0] += sin(-rotation[1]) * mul * CAMERA_SPEED;
+    orig[2] += cos(-rotation[1]) * mul * CAMERA_SPEED;
 
     // A and D
-    mul = glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A);
+    mul = glfwGetKey(window, GLFW_KEY_A) - glfwGetKey(window, GLFW_KEY_D);
 
-    orig[0] += cos(rotation[0]) * mul * CAMERA_SPEED; // * dt
-    orig[2] += sin(rotation[0]) * mul * CAMERA_SPEED; // * dt
+    orig[0] += cos(rotation[1]) * mul * CAMERA_SPEED; // * dt
+    orig[2] += sin(rotation[1]) * mul * CAMERA_SPEED; // * dt
 
     // Space and shift
     mul = glfwGetKey(window, GLFW_KEY_SPACE) - glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
@@ -130,6 +130,7 @@ int main() {
 
     float cam_pos[3] = {0.0, 0.0, 0.0};
     float cam_rot[2] = {0.0, 0.0};
+    float cam_for[3] = {0.0, 0.0, 1.0};
 
     float prev_mouse_x = 0.0, prev_mouse_y = 0.0;
     // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_x);
@@ -143,8 +144,15 @@ int main() {
 
         glUseProgram(main_program);
 
+        float temp = cos(cam_rot[0]);
+
+        cam_for[0] = sin(-cam_rot[1]) * temp;
+        cam_for[1] = sin(cam_rot[0]);
+        cam_for[2] = cos(cam_rot[1]) * temp;
+
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform2fv(glGetUniformLocation(main_program, "rotation"), 1, cam_rot);
+        glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
 
         glDrawArrays(GL_POINTS, 0, 1);
 
@@ -158,6 +166,11 @@ int main() {
                 cam_pos[2]
             );
             printf("cam_rot -> %f | %f\n", cam_rot[0], cam_rot[1]);
+            printf("cam_for -> %f | %f | %f\n",
+                cam_for[0],
+                cam_for[1],
+                cam_for[2]
+            );
         }
 
         if (frame % 1000 == 0){
