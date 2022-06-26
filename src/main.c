@@ -45,16 +45,6 @@ void GLAPIENTRY gl_error_callback(
 }
 
 void calc_movement(GLFWwindow* window, float* orig, float* rotation, float prev_mouse_x, float prev_mouse_y){
-    // Orig is vec3, rotation is vec2 (pitch yaw)
-    // float cur_mouse_x, cur_mouse_y;
-    // glfwGetCursorPos(window, &cur_mouse_x, &cur_mouse_y);
-
-    // cur_mouse_x -= prev_mouse_x;
-    // cur_mouse_y -= prev_mouse_y;
-
-    // rotation[0] += cur_mouse_y * MOUSE_SENSITIVITY;
-    // rotation[1] += cur_mouse_x * MOUSE_SENSITIVITY;
-
     rotation[0] += (glfwGetKey(window, GLFW_KEY_I) - glfwGetKey(window, GLFW_KEY_K))
                      * MOUSE_SENSITIVITY * 0.01;
     rotation[1] += (glfwGetKey(window, GLFW_KEY_L) - glfwGetKey(window, GLFW_KEY_J))
