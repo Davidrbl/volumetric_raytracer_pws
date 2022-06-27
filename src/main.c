@@ -15,7 +15,7 @@
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
 #define MOUSE_SENSITIVITY 3.0
-#define CAMERA_SPEED 0.1
+#define CAMERA_SPEED 1.0
 
 #define PI 3.141592
 
@@ -28,7 +28,21 @@ static void framebuffer_resize_callback(GLFWwindow* window, int width, int heigh
 }
 
 u8 texture_function(float x, float y, float z){
-    return 0;
+    x = x*2.0-1.0;
+    y = y*2.0-1.0;
+    z = z*2.0-1.0;
+
+    float dist = sqrt(
+        x*x +
+        y*y +
+        z*z
+    );
+
+    dist /= sqrt(3); // divide by maximum value, so dist is now from 0 to 1
+
+    dist *= (u8)0xFF;
+
+    return (u8)dist;
 }
 
 void GLAPIENTRY gl_error_callback(
@@ -49,11 +63,11 @@ void GLAPIENTRY gl_error_callback(
             source, type, id, severity, length, message, userParam);
 }
 
-void calc_movement(GLFWwindow* window, float* orig, float* rotation, float prev_mouse_x, float prev_mouse_y){
+void calc_movement(GLFWwindow* window, float* orig, float* rotation, float dt, float prev_mouse_x, float prev_mouse_y){
     rotation[0] += (glfwGetKey(window, GLFW_KEY_I) - glfwGetKey(window, GLFW_KEY_K))
-                     * MOUSE_SENSITIVITY * 0.01;
+                     * MOUSE_SENSITIVITY * dt;
     rotation[1] += (glfwGetKey(window, GLFW_KEY_L) - glfwGetKey(window, GLFW_KEY_J))
-                     * MOUSE_SENSITIVITY * 0.01;
+                     * MOUSE_SENSITIVITY * dt;
 
     if (rotation[0] >  0.49*PI) rotation[0] =  0.49*PI;
     if (rotation[0] < -0.49*PI) rotation[0] = -0.49*PI;
@@ -63,18 +77,18 @@ void calc_movement(GLFWwindow* window, float* orig, float* rotation, float prev_
     // W and S
     mul = glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S);
 
-    orig[0] += sin(-rotation[1]) * mul * CAMERA_SPEED;
-    orig[2] += cos(-rotation[1]) * mul * CAMERA_SPEED;
+    orig[0] += sin(-rotation[1]) * mul * CAMERA_SPEED * dt;
+    orig[2] += cos(-rotation[1]) * mul * CAMERA_SPEED * dt;
 
     // A and D
     mul = glfwGetKey(window, GLFW_KEY_A) - glfwGetKey(window, GLFW_KEY_D);
 
-    orig[0] += cos(rotation[1]) * mul * CAMERA_SPEED; // * dt
-    orig[2] += sin(rotation[1]) * mul * CAMERA_SPEED; // * dt
+    orig[0] += cos(rotation[1]) * mul * CAMERA_SPEED * dt;
+    orig[2] += sin(rotation[1]) * mul * CAMERA_SPEED * dt;
 
     // Space and shift
     mul = glfwGetKey(window, GLFW_KEY_SPACE) - glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
-    orig[1] += mul * CAMERA_SPEED;
+    orig[1] += mul * CAMERA_SPEED * dt;
 }
 
 int main() {
@@ -123,6 +137,10 @@ int main() {
     float time_begin;
     u64 frame = 1;
 
+    float frame_begin_time;
+    float frame_end_time;
+    float dt; // delta-time
+
     u32 cube_density_texture;
     create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
 
@@ -133,9 +151,10 @@ int main() {
     float prev_mouse_x = 0.0, prev_mouse_y = 0.0;
     // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_x);
 
-    while(!glfwWindowShouldClose(window)){
-
-        calc_movement(window, cam_pos, cam_rot, prev_mouse_x, prev_mouse_y);
+    while (!glfwWindowShouldClose(window)){
+        dt = frame_end_time - frame_begin_time;
+        frame_begin_time = glfwGetTime();
+        calc_movement(window, cam_pos, cam_rot, dt, prev_mouse_x, prev_mouse_y);
         // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_y);
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
 
@@ -158,6 +177,7 @@ int main() {
         glfwPollEvents();
         glfwSwapBuffers(window);
 
+        #if 0
         if (frame % 100 == 0) {
             printf("cam_pos -> %f | %f | %f\n",
                 cam_pos[0],
@@ -176,6 +196,8 @@ int main() {
             printf("time for frame: %f\n", (glfwGetTime()-time_begin));
             time_begin = glfwGetTime();
         }
+        #endif
+        frame_end_time = glfwGetTime();
         frame++;
     }
     glfwDestroyWindow(window);

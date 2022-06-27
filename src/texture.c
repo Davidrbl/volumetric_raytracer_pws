@@ -11,16 +11,16 @@ void create_texture3D(
 
     glTextureStorage3D(*texture, 1, GL_R8, width, height, depth);
 
-    u8* tex_buf = malloc(width * height * depth); // * sizeof(u9) -> 1
+    u8* tex_buf = malloc(width * height * depth); // * sizeof(u8) -> 1
 
     for (u32 z = 0; z < depth; z++){
         for (u32 y = 0; y < height; y++){
             for (u32 x = 0; x < width; x++){
                 u64 index = z * width * height + y * width + x;
                 // maybe u64 is too big, idk multiplying three times gets big fast
-                float x_coord = x / (width-1);
-                float y_coord = y / (height-1);
-                float z_coord = z / (depth-1);
+                float x_coord = x / (float)width;
+                float y_coord = y / (float)height;
+                float z_coord = z / (float)depth;
                 tex_buf[index] = function(x_coord, y_coord, z_coord);
             }
         }
