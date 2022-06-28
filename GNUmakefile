@@ -1,6 +1,7 @@
-.PHONY: all clean run
+.PHONY: all clean run debug
 
 MKDIR := mkdir -p
+DEBUGGER ?= lldb
 SRCDIR ?= src
 OBJDIR ?= obj
 DEPDIR ?= dep
@@ -17,14 +18,17 @@ endif
 CPPFLAGS := -I$(INCDIR) $(shell pkg-config --cflags-only-I glfw3) $(CPPFLAGS)
 CFLAGS := -Wall -Wextra -Wpedantic -march=native -pipe -std=c17 \
           $(shell pkg-config --cflags-only-other glfw3) $(CFLAGS)
-LDFLAGS := -fuse-ld=lld $(shell pkg-config --libs glfw3) $(LDFLAGS)
+LDFLAGS := -fuse-ld=lld $(shell pkg-config --libs glfw3) -lm $(LDFLAGS)
 
-DEBUGFLAGS ?= -g -glldb -fsanitize=undefined,address
+DEBUGFLAGS ?= -g -glldb
+SANFLAGS ?= -fsanitize=undefined,address
 DEBUGOPTIFLAGS ?= $(DEBUGFLAGS) -flto=thin -O2
 OPTIFLAGS ?= -flto=thin -O3
 
 ifeq ($(MODE),debug)
 CFLAGS += $(DEBUGFLAGS)
+else ifeq ($(MODE),debugsan)
+CFLAGS += $(DEBUGFLAGS) $(SANFLAGS)
 else ifeq ($(MODE),debugopti)
 CFLAGS += $(DEBUGOPTIFLAGS)
 else ifeq ($(MODE),opti)
@@ -51,3 +55,6 @@ clean:
 
 run: $(BIN)
 	@./$(BIN)
+
+debug: $(BIN)
+	@$(DEBUGGER) ./$(BIN)
