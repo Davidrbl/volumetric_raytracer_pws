@@ -134,6 +134,97 @@ int main() {
         &main_program
     );
 
+    u32 objects_buffer;
+
+    float* test_buffer = NULL;
+    u32 test_buffer_size = 0;
+
+    // 5 spheres, 10 cubes
+    u32 num_spheres = 2;
+    u32 num_cubes = 0;
+
+    u32 index = 0;
+
+    test_buffer_size =  num_spheres * 4 * sizeof(float) +
+                        num_cubes * 6 * sizeof(float) +
+                        2 * sizeof(float); // for the split floats
+
+    // test_buffer_size = 1000;
+    test_buffer = malloc(test_buffer_size);
+
+    for (u32 i = 0; i < num_spheres; i++){
+        test_buffer[index + 0] = (float)(i+1);
+        test_buffer[index + 1] = (float)(i+1);
+        test_buffer[index + 2] = (float)(i+1);
+        test_buffer[index + 3] = 0.5f;
+
+        index += 4;
+    }
+
+    test_buffer[index] = (float)0xFFFFFFFF;
+    index++;
+
+    for (u32 i = 0; i < num_cubes; i++){
+        test_buffer[index + 0] = (float)(i+1);
+        test_buffer[index + 1] = (float)(i+1);
+        test_buffer[index + 2] = (float)(i+1);
+        test_buffer[index + 3] = 0.5f;
+        test_buffer[index + 4] = 0.5f;
+        test_buffer[index + 5] = 0.5f;
+
+        index += 6;
+    }
+
+    test_buffer[index] = (float)0xFFFFFFFF;
+    index++;
+
+    // Print the test scene
+    index = 0;
+    while (1){
+        if (test_buffer[index] == (float)0xFFFFFFFF) break;
+        printf("Sphere -> %f %f %f %f\n",
+            test_buffer[index + 0],
+            test_buffer[index + 1],
+            test_buffer[index + 2],
+            test_buffer[index + 3]
+        );
+
+        index += 4;
+    }
+
+    printf("SPLIT DETECTED\n");
+
+    index++;
+
+    while (1){
+        if (test_buffer[index] == (float)0xFFFFFFFF) break;
+        printf("Cube -> %f %f %f | %f %f %f\n",
+            test_buffer[index + 0],
+            test_buffer[index + 1],
+            test_buffer[index + 2],
+
+            test_buffer[index + 3],
+            test_buffer[index + 4],
+            test_buffer[index + 5]
+        );
+
+        index += 6;
+    }
+
+    printf("SPLIT DETECTED\n");
+
+    index++;
+
+    for (u32 i = 0; i < test_buffer_size/ sizeof(float); i++){
+        printf("%d -> %f\n", i, test_buffer[i]);
+    }
+
+    glCreateBuffers(1, &objects_buffer);
+    glNamedBufferData(objects_buffer, test_buffer_size, test_buffer, GL_DYNAMIC_READ);
+    free(test_buffer);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
+
     float time_begin;
     u64 frame = 1;
 
@@ -169,7 +260,6 @@ int main() {
         cam_for[2] = cos(cam_rot[1]) * temp;
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
-        glUniform2fv(glGetUniformLocation(main_program, "rotation"), 1, cam_rot);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
 
         glDrawArrays(GL_POINTS, 0, 1);
@@ -199,6 +289,7 @@ int main() {
         #endif
         frame_end_time = glfwGetTime();
         frame++;
+        // printf("a\n");
     }
     glfwDestroyWindow(window);
     glfwTerminate();

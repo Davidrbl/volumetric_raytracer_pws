@@ -2,6 +2,11 @@
 
 layout (location = 0) out vec4 FragColor;
 
+layout (std430, binding = 0) readonly buffer objects
+{
+    float data[];
+};
+
 in FRAG_IN {
     vec2 uv;
     mat3 rot;
@@ -12,11 +17,20 @@ struct HitResult {
     bool valid;
 };
 
+struct ObjectHit {
+    vec2 result;
+    bool valid;
+    uint object_index;
+};
+
 #define PI 3.141592
+#define SAMPLE_POINTS 10
+#define OBJECT_SPLIT 0xFFFFFFFF
 
 uniform vec3 cam_origin;
-uniform vec2 rotation; // x pitch, y yaw
 uniform vec3 cam_for;
+
+uniform sampler3D cube_density_texture;
 
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim){
     HitResult result;
@@ -78,6 +92,8 @@ HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube
     result.result.x = tmin;
     result.result.y = tmax;
 
+    if (result.result.x > result.result.y) result.result.xy = result.result.yx;
+
     return result;
 }
 
@@ -110,27 +126,128 @@ HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere){
     return result;
 }
 
-HitResult intersect(vec3 ray_origin, vec3 ray_dir){
-    HitResult return_value;
+ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
+    ObjectHit return_value = ObjectHit(
+        vec2(0.0), // Result, doesn't have one
+        false, // Valid, false as default
+        1 // object_index, where the floats start
+    );
 
-    return_value = cube_intersect(ray_origin, ray_dir, vec3(0.0), vec3(1.0));
+    uint index = 0;
+
+    // for (int i = 0; i < 2; i++){
+    //     vec4 sphere_data = vec4(
+    //         data[index + 0],
+    //         data[index + 1],
+    //         data[index + 2],
+    //         data[index + 3]
+    //     );
+    //     HitResult cur_result = sphere_intersect(ray_origin, ray_dir, sphere_data);
+
+    //     if (cur_result.valid && cur_result.result.y > 0.0 && // if the hit is valid
+    //         (!return_value.valid || // if we've hit something already
+    //         cur_result.result.x < return_value.result.x)) { // if this hit is actually closer than the other one
+    //             return_value.result = cur_result.result;
+    //             return_value.valid = true;
+    //             return_value.object_index = index;
+    //     }
+    //     index += 4;
+    // }
+
+    // /*
+    // ======================== FUCKY SHIT ================================== //
+
+    // Spheres
+    while (data[index] != OBJECT_SPLIT){
+    // while (false){
+        vec4 sphere_data = vec4(
+            data[index + 0],
+            data[index + 1],
+            data[index + 2],
+            data[index + 3]
+        );
+        HitResult cur_result = sphere_intersect(ray_origin, ray_dir, sphere_data);
+
+        if (cur_result.valid && cur_result.result.y > 0.0 && // if the hit is valid
+            (!return_value.valid || // if we've hit something already
+            cur_result.result.x < return_value.result.x)) {
+                return_value.result = cur_result.result;
+                return_value.valid = true;
+                return_value.object_index = index;
+        }
+
+        index += 4;
+    }
+
+    index++;
+    // A split was detected on the spheres, now onto cubes
+    // Cubes
+    // while (data[index] != OBJECT_SPLIT){
+    while (false){
+        vec3 cube_pos_data = vec3(
+            data[index + 0],
+            data[index + 1],
+            data[index + 2]
+        );
+        vec3 cube_dim_data = vec3(
+            data[index + 3],
+            data[index + 4],
+            data[index + 5]
+        );
+
+        HitResult cur_result = cube_intersect(ray_origin, ray_dir, cube_pos_data, cube_dim_data);
+
+        if (cur_result.valid && cur_result.result.y > 0.0 &&
+            (!return_value.valid ||
+            cur_result.result.x < return_value.result.x)){
+                return_value.result = cur_result.result;
+                return_value.valid = true;
+                return_value.object_index = index;
+        }
+
+        index += 6;
+    }
+
+    index++;
+
+    // ======================== END OF FUCKY SHIT ================================== //
 
     if (return_value.result.x > return_value.result.y) return_value.result.xy = return_value.result.yx;
 
     return return_value;
-
 }
 
 void main(){
     vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
     ray_dir = normalize(ray_dir);
     ray_dir = ray_dir * frag_in.rot;
-    // Take camera rotation into account, by rotation matrix or another way
-    HitResult hit = intersect(cam_origin, ray_dir);
-
+    ObjectHit hit = intersect(cam_origin, ray_dir);
+    /*
+    ObjectHit hit = ObjectHit(
+        vec2(0.0),
+        true,
+        0
+    );
+    */
     vec3 col = vec3(0.0);
 
-    if (hit.valid && hit.result.y > 0.0) col = vec3((hit.result.y - hit.result.x)/2) + 0.2;
+    if (hit.valid && hit.result.y > 0.0){
+        // vec3 cube_entry = cam_origin + ray_origin * hit.result.x;
+        // vec3 cube_exit = cam_origin + ray_origin * hit.result.y;
+
+        // for (int i = 0; i < SAMPLE_POINTS; i++){
+        //     float depth = mix(hit.result.x, hit.result.y, i / SAMPLE_POINTS);
+
+        //     vec3 sample_point_world = cam_origin + ray_origin * depth;
+
+        //     //Calculate the sample point relative to the cube
+        //     vec3 sample_point_cube = sample_point_world - vec3(0.0)
+        // }
+        // col = vec3(hit.result.x);
+        col = vec3(1.0);
+    }
+
+    // col = vec3(0.0, 1.0, 0.0);
 
     FragColor = vec4(col, 1.0);
 }
