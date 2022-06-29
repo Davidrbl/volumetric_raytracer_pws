@@ -158,8 +158,13 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
     // ======================== FUCKY SHIT ================================== //
 
     // Spheres
-    while (data[index] != OBJECT_SPLIT){
+    // while (data[index] != OBJECT_SPLIT){
     // while (false){
+
+    uint sphere_count = int(data[index]);
+    index++;
+
+    for (int i = 0; i < sphere_count; i++){
         vec4 sphere_data = vec4(
             data[index + 0],
             data[index + 1],
@@ -179,11 +184,13 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
         index += 4;
     }
 
+    uint cube_count = int(data[index]);
     index++;
     // A split was detected on the spheres, now onto cubes
     // Cubes
     // while (data[index] != OBJECT_SPLIT){
-    while (false){
+    // while (false){
+    for (int i = 0; i < cube_count; i++){
         vec3 cube_pos_data = vec3(
             data[index + 0],
             data[index + 1],
@@ -208,7 +215,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
         index += 6;
     }
 
-    index++;
+    // index++;
 
     // ======================== END OF FUCKY SHIT ================================== //
 
