@@ -289,12 +289,13 @@ int main() {
                 );
                 printf("mouse_x: %f | %f\n", mouse_x[0], mouse_x[1]);
                 printf("mouse_y: %f | %f\n", mouse_y[0], mouse_y[1]);
+                printf("\n");
             }
             if (glfwGetKey(window, GLFW_KEY_T)) {
                 printf("time for frame: %f\n", (glfwGetTime() - time_begin) * 10.f);
+                printf("\n");
             }
             time_begin = glfwGetTime();
-            printf("\n");
         }
         frame_end_time = glfwGetTime();
         frame++;
