@@ -14,7 +14,7 @@
 #define GL_VERSION_MINOR 6
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
-#define MOUSE_SENSITIVITY 3.0
+#define MOUSE_SENSITIVITY 0.5
 #define CAMERA_SPEED 1.0
 
 #define PI 3.141592
@@ -63,32 +63,38 @@ void GLAPIENTRY gl_error_callback(
             source, type, id, severity, length, message, userParam);
 }
 
-void calc_movement(GLFWwindow* window, float* orig, float* rotation, float dt, float prev_mouse_x, float prev_mouse_y){
-    rotation[0] += (glfwGetKey(window, GLFW_KEY_I) - glfwGetKey(window, GLFW_KEY_K))
-                     * MOUSE_SENSITIVITY * dt;
-    rotation[1] += (glfwGetKey(window, GLFW_KEY_L) - glfwGetKey(window, GLFW_KEY_J))
-                     * MOUSE_SENSITIVITY * dt;
+void calc_movement(GLFWwindow* window, float* cam_pos, float* cam_rot, float* cam_for, float dt, double* mouse_x, double* mouse_y){
+    cam_rot[0] += (mouse_y[1] - mouse_y[0])
+                   * MOUSE_SENSITIVITY * dt;
+    cam_rot[1] += (mouse_x[0] - mouse_x[1])
+                   * MOUSE_SENSITIVITY * dt;
 
-    if (rotation[0] >  0.49*PI) rotation[0] =  0.49*PI;
-    if (rotation[0] < -0.49*PI) rotation[0] = -0.49*PI;
+    if (cam_rot[0] >  0.5*PI) cam_rot[0] =  0.5*PI;
+    if (cam_rot[0] < -0.5*PI) cam_rot[0] = -0.5*PI;
 
     float mul;
 
     // W and S
     mul = glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S);
 
-    orig[0] += sin(-rotation[1]) * mul * CAMERA_SPEED * dt;
-    orig[2] += cos(-rotation[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[0] += sin(-cam_rot[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[2] += cos(-cam_rot[1]) * mul * CAMERA_SPEED * dt;
 
     // A and D
     mul = glfwGetKey(window, GLFW_KEY_A) - glfwGetKey(window, GLFW_KEY_D);
 
-    orig[0] += cos(rotation[1]) * mul * CAMERA_SPEED * dt;
-    orig[2] += sin(rotation[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[0] += cos(cam_rot[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[2] += sin(cam_rot[1]) * mul * CAMERA_SPEED * dt;
 
     // Space and shift
     mul = glfwGetKey(window, GLFW_KEY_SPACE) - glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
-    orig[1] += mul * CAMERA_SPEED * dt;
+    cam_pos[1] += mul * CAMERA_SPEED * dt;
+
+    float temp = cos(cam_rot[0]);
+
+    cam_for[0] = sin(-cam_rot[1]) * temp;
+    cam_for[1] = sin(cam_rot[0]);
+    cam_for[2] = cos(cam_rot[1]) * temp;
 }
 
 int main() {
@@ -111,6 +117,9 @@ int main() {
 
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (glfwRawMouseMotionSupported()) {
+        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
@@ -237,29 +246,25 @@ int main() {
     u32 cube_density_texture;
     create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
 
-    float cam_pos[3] = {0.0, 0.0, 0.0};
-    float cam_rot[2] = {0.0, 0.0};
-    float cam_for[3] = {0.0, 0.0, 1.0};
+    float cam_pos[3] = {0.0};
+    float cam_rot[2] = {0.0};
+    float cam_for[3] = {0.0};
 
-    float prev_mouse_x = 0.0, prev_mouse_y = 0.0;
-    // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_x);
+    double mouse_x[2], mouse_y[2];
+    glfwGetCursorPos(window, mouse_x, mouse_x);
 
     while (!glfwWindowShouldClose(window)){
+        mouse_x[1] = mouse_x[0];
+        mouse_y[1] = mouse_y[0];
+        glfwGetCursorPos(window, mouse_x, mouse_y);
         dt = frame_end_time - frame_begin_time;
         frame_begin_time = glfwGetTime();
-        calc_movement(window, cam_pos, cam_rot, dt, prev_mouse_x, prev_mouse_y);
-        // glfwGetCursorPos(window, &prev_mouse_x, &prev_mouse_y);
+        calc_movement(window, cam_pos, cam_rot, cam_for, dt, mouse_x, mouse_y);
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glUseProgram(main_program);
-
-        float temp = cos(cam_rot[0]);
-
-        cam_for[0] = sin(-cam_rot[1]) * temp;
-        cam_for[1] = sin(cam_rot[0]);
-        cam_for[2] = cos(cam_rot[1]) * temp;
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
@@ -282,15 +287,17 @@ int main() {
                     cam_for[1],
                     cam_for[2]
                 );
+                printf("mouse_x: %f | %f\n", mouse_x[0], mouse_x[1]);
+                printf("mouse_y: %f | %f\n", mouse_y[0], mouse_y[1]);
             }
             if (glfwGetKey(window, GLFW_KEY_T)) {
                 printf("time for frame: %f\n", (glfwGetTime() - time_begin) * 10.f);
             }
             time_begin = glfwGetTime();
+            printf("\n");
         }
         frame_end_time = glfwGetTime();
         frame++;
-        // printf("a\n");
     }
     glfwDestroyWindow(window);
     glfwTerminate();

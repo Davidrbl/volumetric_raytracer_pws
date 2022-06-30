@@ -25,7 +25,7 @@ struct ObjectHit {
 
 #define PI 3.141592
 #define SAMPLE_POINTS 10
-#define OBJECT_SPLIT 0xFFFFFFFF
+//#define OBJECT_SPLIT 0xFFFFFFFF
 
 uniform vec3 cam_origin;
 uniform vec3 cam_for;
