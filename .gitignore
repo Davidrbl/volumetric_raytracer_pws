@@ -3,3 +3,5 @@
 /obj/
 /glfw3.dll
 /include/glfw/
+/include/sh_*
+/src/sh_*

@@ -2,11 +2,15 @@
 
 MKDIR := mkdir -p
 DEBUGGER ?= lldb
+TOOLSDIR ?= tools
 SRCDIR ?= src
+SHADERDIR ?= $(SRCDIR)/shaders
 OBJDIR ?= obj
 DEPDIR ?= dep
 INCDIR ?= include
-SRCS := $(wildcard $(SRCDIR)/*.c)
+SHADERS := $(wildcard $(SHADERDIR)/*)
+SRCS := $(wildcard $(SRCDIR)/*.c) \
+        $(subst $(SHADERDIR)/,$(SRCDIR)/sh_,$(SHADERS:=.c))
 OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
 DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
 BIN ?= main
@@ -36,6 +40,12 @@ endif
 
 all: $(BIN)
 
+$(INCDIR)/sh_%.h: $(SHADERDIR)/%
+	@$(TOOLSDIR)/genshader.py "$<" "$@"
+
+$(SRCDIR)/sh_%.c: $(SHADERDIR)/% $(INCDIR)/sh_%.h
+	@$(TOOLSDIR)/genshader.py "$<" "$@"
+
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@$(MKDIR) "$(DEPDIR)"
 	@$(CC) $(CPPFLAGS) -M "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o: ,g' > "$@"
@@ -50,7 +60,7 @@ $(BIN): $(OBJS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o "$@"
 
 clean:
-	$(RM) $(OBJDIR)/* $(DEPDIR)/* $(BIN)
+	$(RM) $(OBJDIR)/* $(DEPDIR)/* $(SRCDIR)/sh_* $(INCDIR)/sh_* $(BIN)
 
 run: $(BIN)
 	@./$(BIN)
