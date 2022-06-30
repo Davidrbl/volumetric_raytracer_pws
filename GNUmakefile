@@ -9,7 +9,7 @@ OBJDIR ?= obj
 DEPDIR ?= dep
 INCDIR ?= include
 SHADERS := $(wildcard $(SHADERDIR)/*)
-SRCS := $(wildcard $(SRCDIR)/*.c) \
+SRCS := $(filter-out sh_%,$(wildcard $(SRCDIR)/*.c)) \
         $(subst $(SHADERDIR)/,$(SRCDIR)/sh_,$(SHADERS:=.c))
 OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
 DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
