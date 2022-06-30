@@ -97,6 +97,7 @@ int main() {
         return 1;
     }
 
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH,
                                           WINDOW_HEIGHT,
                                           "Volumetric Raytracer",
@@ -226,11 +227,11 @@ int main() {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
 
-    float time_begin;
+    float time_begin = 0.f;
     u64 frame = 1;
 
-    float frame_begin_time;
-    float frame_end_time;
+    float frame_begin_time = 0.f;
+    float frame_end_time = 0.f;
     float dt; // delta-time
 
     u32 cube_density_texture;
@@ -268,26 +269,25 @@ int main() {
         glfwPollEvents();
         glfwSwapBuffers(window);
 
-        #if 0
         if (frame % 100 == 0) {
-            printf("cam_pos -> %f | %f | %f\n",
-                cam_pos[0],
-                cam_pos[1],
-                cam_pos[2]
-            );
-            printf("cam_rot -> %f | %f\n", cam_rot[0], cam_rot[1]);
-            printf("cam_for -> %f | %f | %f\n",
-                cam_for[0],
-                cam_for[1],
-                cam_for[2]
-            );
-        }
-
-        if (frame % 1000 == 0){
-            printf("time for frame: %f\n", (glfwGetTime()-time_begin));
+            if (glfwGetKey(window, GLFW_KEY_C)) {
+                printf("cam_pos -> %f | %f | %f\n",
+                    cam_pos[0],
+                    cam_pos[1],
+                    cam_pos[2]
+                );
+                printf("cam_rot -> %f | %f\n", cam_rot[0], cam_rot[1]);
+                printf("cam_for -> %f | %f | %f\n",
+                    cam_for[0],
+                    cam_for[1],
+                    cam_for[2]
+                );
+            }
+            if (glfwGetKey(window, GLFW_KEY_T)) {
+                printf("time for frame: %f\n", (glfwGetTime() - time_begin) * 10.f);
+            }
             time_begin = glfwGetTime();
         }
-        #endif
         frame_end_time = glfwGetTime();
         frame++;
         // printf("a\n");
