@@ -1,0 +1,19 @@
+---
+Checks: '
+    *,
+    -llvmlibc-restrict-system-libc-headers,
+    -cert-err33-c,
+    -readability-identifier-length,
+    -cppcoreguidelines-avoid-magic-numbers,
+    -readability-magic-numbers,
+    -altera-unroll-loops,
+    -hicpp-uppercase-literal-suffix,
+    -readability-uppercase-literal-suffix,
+    -hicpp-signed-bitwise,
+    -google-readability-todo,
+    -android-cloexec-fopen,
+    -concurrency-*,
+    -bugprone-implicit-widening-of-multiplication-result
+'
+FormatStyle: file
+...
