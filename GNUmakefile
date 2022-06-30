@@ -1,5 +1,7 @@
 .PHONY: all clean run debug
 
+.SECONDARY:
+
 MKDIR := mkdir -p
 DEBUGGER ?= lldb
 TOOLSDIR ?= tools
@@ -40,11 +42,8 @@ endif
 
 all: $(BIN)
 
-$(INCDIR)/sh_%.h: $(SHADERDIR)/%
-	@$(TOOLSDIR)/genshader.py "$<" "$@"
-
-$(SRCDIR)/sh_%.c: $(SHADERDIR)/% $(INCDIR)/sh_%.h
-	@$(TOOLSDIR)/genshader.py "$<" "$@"
+$(SRCDIR)/sh_%.c $(INCDIR)/sh_%.h &: $(SHADERDIR)/%
+	@env SRCDIR="$(SRCDIR)" INCDIR="$(INCDIR)" $(TOOLSDIR)/genshader.py "$<" "$(basename $(notdir $@))"
 
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@$(MKDIR) "$(DEPDIR)"

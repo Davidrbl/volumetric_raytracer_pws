@@ -1,32 +1,22 @@
 #!/usr/bin/env python
 
 import sys
-import re
+import os
 
 shader = open(sys.argv[1], "rt")
+src = open(f"{os.getenv('SRCDIR')}/{sys.argv[2]}.c", "wt")
+header = open(f"{os.getenv('INCDIR')}/{sys.argv[2]}.h", "wt")
 
-if sys.argv[2].endswith(".c"):
-    out = open(sys.argv[2], "wt")
-    shadername = re.sub(".*/(.*)\.c", "\\1", sys.argv[2])
+src.write(f"#include <{sys.argv[2]}.h>\n\n")
+src.write(f"const GLchar* {sys.argv[2].replace('.', '_')} = \"")
 
-    out.write(f"#include <{shadername}.h>\n\n")
-    out.write(f"const GLchar* {shadername.replace('.', '_')} = \"")
+src.write(shader.read().replace("\n", "\\n\"\n\""))
 
-    out.write(shader.read().replace("\n", "\\n\"\n\""))
+src.write("\";\n")
 
-    out.write("\";\n")
-
-    out.close()
-elif sys.argv[2].endswith(".h"):
-    out = open(sys.argv[2], "wt")
-    shadername = re.sub(".*/(.*)\.h", "\\1", sys.argv[2])
-
-    out.write("#include <glad/gl.h>\n\n")
-    out.write(f"extern const GLchar* {shadername.replace('.', '_')};\n")
-
-    out.close()
-else:
-    shader.close()
-    raise Exception("incorrect arguments")
+header.write("#include <glad/gl.h>\n\n")
+header.write(f"extern const GLchar* {sys.argv[2].replace('.', '_')};\n")
 
 shader.close()
+src.close()
+header.close()
