@@ -43,7 +43,8 @@ endif
 all: $(BIN)
 
 $(SRCDIR)/sh_%.c $(INCDIR)/sh_%.h &: $(SHADERDIR)/%
-	@env SRCDIR="$(SRCDIR)" INCDIR="$(INCDIR)" $(TOOLSDIR)/genshader.py "$<" "$(basename $(notdir $@))"
+	@env SHADERDIR="$(SHADERDIR)" SRCDIR="$(SRCDIR)" INCDIR="$(INCDIR)" \
+	    $(TOOLSDIR)/genshader.py "$(notdir $<)"
 
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@$(MKDIR) "$(DEPDIR)"
