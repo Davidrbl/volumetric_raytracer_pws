@@ -6,6 +6,9 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 
+#include <sh_main.frag.h>
+#include <sh_main.geom.h>
+#include <sh_main.vert.h>
 #include <shader.h>
 #include <standard_types.h>
 #include <texture.h>
@@ -169,11 +172,11 @@ int main() {
     // Shader program setup
     u32 main_program = 0;
     create_program(
-        "src/shaders/main.vert",
+        sh_main_vert,
         NULL,
         NULL,
-        "src/shaders/main.geom",
-        "src/shaders/main.frag",
+        sh_main_geom,
+        sh_main_frag,
         &main_program
     );
 

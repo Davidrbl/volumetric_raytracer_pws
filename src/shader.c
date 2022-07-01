@@ -3,29 +3,10 @@
 
 #include <shader.h>
 
-void create_shader(const char* path, GLenum type, u32* dest) {
+void create_shader(const GLchar* const source, GLenum type, u32* dest) {
     *dest = glCreateShader(type);
 
-    FILE* file_pointer = fopen(path, "rb");
-
-    if (!file_pointer) {
-        exit(42);
-    }
-
-    fseek(file_pointer, 0, SEEK_END);
-
-    size_t file_len = ftell(file_pointer);
-
-    fseek(file_pointer, 0, SEEK_SET);
-
-    GLchar* source = malloc((file_len + 1) * sizeof(GLchar));
-
-    fread(source, sizeof(GLchar), file_len, file_pointer);
-    source[file_len] = '\0';
-
-    fclose(file_pointer);
-
-    glShaderSource(*dest, 1, (const GLchar* const*)&source, NULL);
+    glShaderSource(*dest, 1, &source, NULL);
 
     glCompileShader(*dest);
 
@@ -39,18 +20,16 @@ void create_shader(const char* path, GLenum type, u32* dest) {
 
         glDeleteShader(*dest);
 
-        fprintf(stderr, "SHADER COMPILE ERROR: %s\n%s\n", path, error_string);
+        fprintf(stderr, "SHADER COMPILE ERROR: %s\n", error_string);
         exit(1);
     }
-
-    free(source);
 }
 
-void create_program_compute(const char* compute_shader_path, u32* dest) {
+void create_program_compute(const GLchar* compute_shader_source, u32* dest) {
     *dest = glCreateProgram();
 
     u32 compute_shader = 0;
-    create_shader(compute_shader_path, GL_VERTEX_SHADER, &compute_shader);
+    create_shader(compute_shader_source, GL_VERTEX_SHADER, &compute_shader);
 
     glAttachShader(*dest, compute_shader);
 
@@ -67,11 +46,11 @@ void create_program_compute(const char* compute_shader_path, u32* dest) {
 }
 
 void create_program(
-    const char* vertex_shader_path,
-    const char* tessellation_control_shader_path,
-    const char* tessellation_evaluation_shader_path,
-    const char* geometry_shader_path,
-    const char* fragment_shader_path,
+    const GLchar* vertex_shader_source,
+    const GLchar* tessellation_control_shader_source,
+    const GLchar* tessellation_evaluation_shader_source,
+    const GLchar* geometry_shader_source,
+    const GLchar* fragment_shader_source,
     u32* dest
 ) {
     *dest = glCreateProgram();
@@ -82,24 +61,24 @@ void create_program(
     u32 geometry_shader = 0;
     u32 fragment_shader = 0;
 
-    if (vertex_shader_path) {
-        create_shader(vertex_shader_path, GL_VERTEX_SHADER, &vertex_shader);
+    if (vertex_shader_source) {
+        create_shader(vertex_shader_source, GL_VERTEX_SHADER, &vertex_shader);
         glAttachShader(*dest, vertex_shader);
     }
-    if (tessellation_control_shader_path) {
-        create_shader(tessellation_control_shader_path, GL_TESS_CONTROL_SHADER, &tessellation_control_shader);
+    if (tessellation_control_shader_source) {
+        create_shader(tessellation_control_shader_source, GL_TESS_CONTROL_SHADER, &tessellation_control_shader);
         glAttachShader(*dest, tessellation_control_shader);
     }
-    if (tessellation_evaluation_shader_path) {
-        create_shader(tessellation_evaluation_shader_path, GL_TESS_EVALUATION_SHADER, &tessellation_evaluation_shader);
+    if (tessellation_evaluation_shader_source) {
+        create_shader(tessellation_evaluation_shader_source, GL_TESS_EVALUATION_SHADER, &tessellation_evaluation_shader);
         glAttachShader(*dest, tessellation_evaluation_shader);
     }
-    if (geometry_shader_path) {
-        create_shader(geometry_shader_path, GL_GEOMETRY_SHADER, &geometry_shader);
+    if (geometry_shader_source) {
+        create_shader(geometry_shader_source, GL_GEOMETRY_SHADER, &geometry_shader);
         glAttachShader(*dest, geometry_shader);
     }
-    if (fragment_shader_path) {
-        create_shader(fragment_shader_path, GL_FRAGMENT_SHADER, &fragment_shader);
+    if (fragment_shader_source) {
+        create_shader(fragment_shader_source, GL_FRAGMENT_SHADER, &fragment_shader);
         glAttachShader(*dest, fragment_shader);
     }
 
@@ -112,19 +91,19 @@ void create_program(
         exit(1);
     }
 
-    if (vertex_shader_path) {
+    if (vertex_shader_source) {
         glDeleteShader(vertex_shader);
     }
-    if (tessellation_control_shader_path) {
+    if (tessellation_control_shader_source) {
         glDeleteShader(tessellation_control_shader);
     }
-    if (tessellation_evaluation_shader_path) {
+    if (tessellation_evaluation_shader_source) {
         glDeleteShader(tessellation_evaluation_shader);
     }
-    if (geometry_shader_path) {
+    if (geometry_shader_source) {
         glDeleteShader(geometry_shader);
     }
-    if (fragment_shader_path) {
+    if (fragment_shader_source) {
         glDeleteShader(fragment_shader);
     }
 }
