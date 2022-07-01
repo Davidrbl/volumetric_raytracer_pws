@@ -36,6 +36,9 @@ struct ObjectHit {
 
 #define PI 3.141592
 
+//#define VERY_SMALL_NUM 0.000000357635468273628 // unnecessarily small
+#define SMALL_NUM 0.000001
+
 #define OBJECT_TYPE_NONE        0
 #define OBJECT_TYPE_SPHERE      1
 #define OBJECT_TYPE_CUBE        2
@@ -150,7 +153,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
 
     uint index = 0;
 
-    uint sphere_count = int(data[index]);
+    uint sphere_count = uint(data[index]);
     index++;
 
     for (int i = 0; i < sphere_count; i++) {
@@ -165,15 +168,15 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
         if (cur_result.valid && cur_result.result.y > 0.0 && // if the hit is valid
             (!return_value.valid || // if we've hit something already
             cur_result.result.x < return_value.result.x)) {
-                return_value.result = cur_result.result;
-                return_value.valid = true;
-                return_value.object_index = index;
+            return_value.result = cur_result.result;
+            return_value.valid = true;
+            return_value.object_index = index;
         }
 
         index += 4;
     }
 
-    uint cube_count = int(data[index]);
+    uint cube_count = uint(data[index]);
     index++;
     // A split was detected on the spheres, now onto cubes
     // Cubes
@@ -194,9 +197,9 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
         if (cur_result.valid && cur_result.result.y > 0.0 &&
             (!return_value.valid ||
             cur_result.result.x < return_value.result.x)) {
-                return_value.result = cur_result.result;
-                return_value.valid = true;
-                return_value.object_index = index;
+            return_value.result = cur_result.result;
+            return_value.valid = true;
+            return_value.object_index = index;
         }
 
         index += 6;
@@ -215,8 +218,8 @@ void main() {
     float dist = 0.0;
     float ys = 0.0;
     while (hit.valid && hit.result.y >= 0.0) {
-        dist += hit.result.y - hit.result.x;
-        ys += hit.result.y + 0.01;
+        dist += hit.result.y - max(hit.result.x, 0);
+        ys += hit.result.y + SMALL_NUM;
         hit = intersect(cam_origin + ray_dir * ys, ray_dir);
     }
     vec3 col = vec3(1.0);
