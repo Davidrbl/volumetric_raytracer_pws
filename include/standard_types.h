@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STANDARD_TYPES_H
+#define STANDARD_TYPES_H
 
 #include <stdint.h>
 
@@ -15,3 +16,5 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 typedef long double f128;
+
+#endif // STANDARD_TYPES_H

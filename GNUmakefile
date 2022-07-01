@@ -16,22 +16,21 @@ CC := clang
 endif
 
 CPPFLAGS := -I$(INCDIR) $(shell pkg-config --cflags-only-I glfw3) $(CPPFLAGS)
-CFLAGS := -Wall -Wextra -Wpedantic -march=native -pipe -std=c17 \
+CFLAGS := -Wall -Wextra -Wpedantic -pipe -std=c17 \
           $(shell pkg-config --cflags-only-other glfw3) $(CFLAGS)
 LDFLAGS := -fuse-ld=lld $(shell pkg-config --libs glfw3) -lm $(LDFLAGS)
 
 DEBUGFLAGS ?= -g -glldb
 SANFLAGS ?= -fsanitize=undefined,address
-DEBUGOPTIFLAGS ?= $(DEBUGFLAGS) -flto=thin -O2
-OPTIFLAGS ?= -flto=thin -O3
+OPTIFLAGS ?= -flto=thin -O2
 
-ifeq ($(MODE),debug)
+ifeq ($(DEBUG),1)
 CFLAGS += $(DEBUGFLAGS)
-else ifeq ($(MODE),debugsan)
-CFLAGS += $(DEBUGFLAGS) $(SANFLAGS)
-else ifeq ($(MODE),debugopti)
-CFLAGS += $(DEBUGOPTIFLAGS)
-else ifeq ($(MODE),opti)
+endif
+ifeq ($(SANITIZE),1)
+CFLAGS += $(SANFLAGS)
+endif
+ifeq ($(OPTI),1)
 CFLAGS += $(OPTIFLAGS)
 endif
 
