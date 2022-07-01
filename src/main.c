@@ -73,6 +73,7 @@ static u8 texture_function(float x, float y, float z) {
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
     dist *= UINT8_MAX;
+    dist = UINT8_MAX - dist;
 
     return (u8)dist;
 }
@@ -127,8 +128,8 @@ int main() {
     }
 
     // TODO: why this break things??
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH,
@@ -148,7 +149,7 @@ int main() {
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     if (!gladLoadGL(glfwGetProcAddress)) {
         glfwDestroyWindow(window);
@@ -177,8 +178,8 @@ int main() {
 
     u32 objects_buffer;
 
-    float* test_buffer = NULL;
-    u32 test_buffer_size = 0;
+    // float* test_buffer = NULL;
+    // u32 test_buffer_size = 0;
 
     u32 num_spheres = 10;
     u32 num_cubes = 0;
@@ -274,6 +275,32 @@ int main() {
     double mouse_y[2] = {0.};
     glfwGetCursorPos(window, mouse_x, mouse_x);
 
+    // Dummy VAO, VBO, EBO
+    GLuint VAO, VBO, EBO;
+    {
+        glCreateVertexArrays(1, &VAO);
+        glCreateBuffers(1, &VBO);
+        glCreateBuffers(1, &EBO);
+
+        glNamedBufferData(VBO, 0, NULL, GL_STATIC_DRAW);
+        glNamedBufferData(EBO, 0, NULL, GL_STATIC_DRAW);
+
+        glEnableVertexArrayAttrib(VAO, 0);
+        glVertexArrayAttribBinding(VAO, 0, 0);
+        glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+
+        glEnableVertexArrayAttrib(VAO, 1);
+        glVertexArrayAttribBinding(VAO, 1, 0);
+        glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 0*sizeof(float));
+
+        glEnableVertexArrayAttrib(VAO, 2);
+        glVertexArrayAttribBinding(VAO, 2, 0);
+        glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_FALSE, 0*sizeof(float));
+
+        glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 0*sizeof(float));
+        glVertexArrayElementBuffer(VAO, EBO);
+    }
+
     while (!glfwWindowShouldClose(window)) {
         dt = (float)(frame_end_time - frame_begin_time);
         frame_begin_time = glfwGetTime();
@@ -290,6 +317,8 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glUseProgram(main_program);
+
+        glBindVertexArray(VAO);
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
