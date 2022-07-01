@@ -201,7 +201,7 @@ int main() {
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(framebuffer_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         u32 renderbuffer;
         // This is just a dummy thing, its sorta like a texture for depth and stencil,
