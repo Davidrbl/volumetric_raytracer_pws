@@ -177,6 +177,51 @@ int main() {
         &main_program
     );
 
+    u32 texture_program = 0;
+    create_program(
+        "src/shaders/texture.vert",
+        NULL,
+        NULL,
+        "src/shaders/texture.geom",
+        "src/shaders/texture.frag",
+        &texture_program
+    );
+
+    u32 framebuffer;
+    u32 framebuffer_texture;
+
+    u32 framebuffer_width = 1024, framebuffer_height = 1024;
+
+    {
+        glCreateFramebuffers(1, &framebuffer);
+        glCreateTextures(GL_TEXTURE_2D, 1, &framebuffer_texture);
+
+        glTextureStorage2D(framebuffer_texture, 1, GL_RGB8, framebuffer_width, framebuffer_height);
+
+        glTextureParameteri(framebuffer_texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(framebuffer_texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        u32 renderbuffer;
+        // This is just a dummy thing, its sorta like a texture for depth and stencil,
+        // but you cant read this and its faster.
+        // we dont want to read it anyway so this is cool.
+
+        glCreateRenderbuffers(1, &renderbuffer);
+
+        glNamedRenderbufferStorage(renderbuffer, GL_DEPTH24_STENCIL8, framebuffer_width, framebuffer_height);
+
+        glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, framebuffer_texture, 0);
+        glNamedFramebufferRenderbuffer(framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+
+        // Check if we have added everything needed for the framebuffer
+
+        GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
+        printf("Framebufferstatus -> %X\n", status);
+        // GL_FRAMEBUFFER_COMPLETE -> 8CD5
+    }
+
     u32 num_spheres = 4;
     u32 num_cubes = 4;
 
@@ -236,6 +281,7 @@ int main() {
     // Dummy VAO
     u32 vao = 0;
     glCreateVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
     while (!glfwWindowShouldClose(window)) {
         dt = (float)(frame_end_time - frame_begin_time);
@@ -250,14 +296,34 @@ int main() {
             glfwSetWindowShouldClose(window, 1);
         }
 
+        // RENDERING TO FRAMEBUFFER
+
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glUseProgram(main_program);
 
-        glBindVertexArray(vao);
+        // glBindVertexArray(vao);
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
+
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // RENDERING TO SCREEN
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glUseProgram(texture_program);
+
+        // glBindVertexArray(vao);
+
+
+        glBindTextureUnit(0, framebuffer_texture);
+        glUniform1i(glGetUniformLocation(texture_program, "texture_ID"), 0);
 
         glDrawArrays(GL_POINTS, 0, 1);
 
