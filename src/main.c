@@ -72,8 +72,8 @@ static u8 texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    dist *= UINT8_MAX;
-    dist = UINT8_MAX - dist;
+    dist *= (float)UINT8_MAX;
+    dist = (float)UINT8_MAX - dist;
 
     return (u8)dist;
 }
@@ -127,16 +127,17 @@ int main() {
         return 1;
     }
 
-    // TODO: why this break things??
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH,
-                                          WINDOW_HEIGHT,
-                                          "Volumetric Raytracer",
-                                          NULL,
-                                          NULL);
+    GLFWwindow* window = glfwCreateWindow(
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        "Volumetric Raytracer",
+        NULL,
+        NULL
+    );
     if (!window) {
         glfwTerminate();
         return 2;
@@ -149,8 +150,6 @@ int main() {
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
-    glfwSwapInterval(1);
-
     if (!gladLoadGL(glfwGetProcAddress)) {
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -158,6 +157,9 @@ int main() {
     }
 
     glfwSwapInterval(0);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
 
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(gl_error_callback, NULL);
@@ -167,7 +169,6 @@ int main() {
     // Shader program setup
     u32 main_program = 0;
     create_program(
-        NULL,
         "src/shaders/main.vert",
         NULL,
         NULL,
@@ -176,13 +177,8 @@ int main() {
         &main_program
     );
 
-    u32 objects_buffer;
-
-    // float* test_buffer = NULL;
-    // u32 test_buffer_size = 0;
-
-    u32 num_spheres = 10;
-    u32 num_cubes = 10;
+    u32 num_spheres = 4;
+    u32 num_cubes = 4;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + 2) * (i64)sizeof(float); // for the split floats
 
@@ -211,46 +207,8 @@ int main() {
         test_buffer[index++] = .5f;
     }
 
+    u32 objects_buffer = 0;
 
-    // Print the test scene
-    index = 0;
-    u32 sphere_count = (u32)test_buffer[index];
-    index++;
-
-    for (u32 i = 0; i < sphere_count; i++){
-        printf("Sphere -> %f %f %f %f\n",
-            test_buffer[index + 0],
-            test_buffer[index + 1],
-            test_buffer[index + 2],
-            test_buffer[index + 3]
-        );
-
-        index += 4;
-    }
-
-    u32 cube_count = (u32)test_buffer[index];
-    index++;
-
-    for (u32 i = 0; i < cube_count; i++){
-        printf("Cube -> %f %f %f | %f %f %f\n",
-            test_buffer[index + 0],
-            test_buffer[index + 1],
-            test_buffer[index + 2],
-
-            test_buffer[index + 3],
-            test_buffer[index + 4],
-            test_buffer[index + 5]
-        );
-
-        index += 6;
-    }
-
-
-#if 0
-    for (u32 i = 0; i < test_buffer_size/ sizeof(float); i++){
-        printf("%d -> %f\n", i, test_buffer[i]);
-    }
-#endif
     glCreateBuffers(1, &objects_buffer);
     glNamedBufferData(objects_buffer, test_buffer_size, test_buffer, GL_DYNAMIC_READ);
     free(test_buffer);
@@ -275,31 +233,9 @@ int main() {
     double mouse_y[2] = {0.};
     glfwGetCursorPos(window, mouse_x, mouse_x);
 
-    // Dummy VAO, VBO, EBO
-    GLuint VAO, VBO, EBO;
-    {
-        glCreateVertexArrays(1, &VAO);
-        // glCreateBuffers(1, &VBO);
-        // glCreateBuffers(1, &EBO);
-
-        // glNamedBufferData(VBO, 0, NULL, GL_STATIC_DRAW);
-        // glNamedBufferData(EBO, 0, NULL, GL_STATIC_DRAW);
-
-        // glEnableVertexArrayAttrib(VAO, 0);
-        // glVertexArrayAttribBinding(VAO, 0, 0);
-        // glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-
-        // glEnableVertexArrayAttrib(VAO, 1);
-        // glVertexArrayAttribBinding(VAO, 1, 0);
-        // glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 0*sizeof(float));
-
-        // glEnableVertexArrayAttrib(VAO, 2);
-        // glVertexArrayAttribBinding(VAO, 2, 0);
-        // glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_FALSE, 0*sizeof(float));
-
-        // glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 0*sizeof(float));
-        // glVertexArrayElementBuffer(VAO, EBO);
-    }
+    // Dummy VAO
+    u32 vao = 0;
+    glCreateVertexArrays(1, &vao);
 
     while (!glfwWindowShouldClose(window)) {
         dt = (float)(frame_end_time - frame_begin_time);
@@ -318,7 +254,7 @@ int main() {
 
         glUseProgram(main_program);
 
-        glBindVertexArray(VAO);
+        glBindVertexArray(vao);
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
@@ -346,7 +282,7 @@ int main() {
                 printf("\n");
             }
             if (glfwGetKey(window, GLFW_KEY_T)) {
-                printf("time for frame: %f\n", (glfwGetTime() - time_begin) * 10.);
+                printf("time for frame: %f ms\n", (glfwGetTime() - time_begin) * 10.);
                 printf("\n");
             }
             time_begin = glfwGetTime();

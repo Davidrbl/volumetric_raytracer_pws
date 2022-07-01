@@ -1,6 +1,8 @@
 #ifndef STANDARD_TYPES_H
 #define STANDARD_TYPES_H
 
+#include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 
 typedef int8_t i8;
