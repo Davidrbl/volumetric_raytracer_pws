@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 
 layout (location = 0) out vec4 FragColor;
 
@@ -207,11 +207,11 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
     return return_value;
 }
 
-void main(){
+void main() {
     vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
     ray_dir = normalize(ray_dir);
     ray_dir *= frag_in.rot;
-    ObjectHit hit = ObjectHit(vec2(0.0), true, 0);
+    ObjectHit hit = ObjectHit(vec2(0.0), true, 0, 0);
     float dist = 0.0;
     float ys = 0.0;
     while (hit.valid && hit.result.y >= 0.0) {
@@ -219,50 +219,7 @@ void main(){
         ys += hit.result.y + 0.01;
         hit = intersect(cam_origin + ray_dir * ys, ray_dir);
     }
-    /*
-    ObjectHit hit = ObjectHit(
-        vec2(0.0),
-        true,
-        0
-    );
-    */
+    vec3 col = vec3(1.0);
 
-    /*
-    ray_dir = ray_dir * frag_in.rot;
-    ObjectHit hit = intersect(cam_origin, ray_dir);
-
-    vec3 col = vec3(0.0);
-
-    if (hit.valid && hit.result.y > 0.0){
-        vec3 frag_pos = cam_origin + ray_dir * hit.result.x;
-        vec3 normal;
-
-        // switch (hit.object_type) {
-        //     case OBJECT_TYPE_SPHERE:
-        //         vec3 sphere_pos = vec3(
-        //             data[hit.object_index + 0],
-        //             data[hit.object_index + 1],
-        //             data[hit.object_index + 2]
-        //         );
-        //         float sphere_radius = data[hit.object_index + 3];
-        //         normal =
-        //         break;
-
-        //     case OBJECT_TYPE_CUBE:
-        //         normal =
-        // }
-    */
-
-    vec3 col = vec3(dist / 2);
-
-
-        // for (uint i = 0; i < num_lights; i++){
-        //     float diffuse = ;
-
-        // }
-
-        col = vec3(1.0, 0.0, 0.0);
-    }
-
-    FragColor = vec4(col, 1.0);
+    FragColor = vec4(col, dist / 2.0);
 }
