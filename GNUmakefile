@@ -11,8 +11,8 @@ OBJDIR ?= obj
 DEPDIR ?= dep
 INCDIR ?= include
 SHADERS := $(wildcard $(SHADERDIR)/*)
-SRCS := $(filter-out sh_%,$(wildcard $(SRCDIR)/*.c)) \
-        $(subst $(SHADERDIR)/,$(SRCDIR)/sh_,$(SHADERS:=.c))
+SRCS := $(subst $(SHADERDIR)/,$(SRCDIR)/sh_,$(SHADERS:=.c)) \
+        $(filter-out sh_%,$(wildcard $(SRCDIR)/*.c))
 OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
 DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
 BIN ?= main
