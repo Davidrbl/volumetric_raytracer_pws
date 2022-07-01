@@ -7,6 +7,17 @@ layout (std430, binding = 0) readonly buffer objects
     float data[];
 };
 
+struct Light {
+    vec3 pos;
+    float intensity;
+};
+
+layout (std430, binding = 1) readonly buffer light_buffer
+{
+    uint num_lights;
+    Light lights[];
+};
+
 in FRAG_IN {
     vec2 uv;
     mat3 rot;
@@ -21,16 +32,19 @@ struct ObjectHit {
     vec2 result;
     bool valid;
     uint object_index;
+    uint object_type;
 };
 
 #define PI 3.141592
 #define SAMPLE_POINTS 10
-#define OBJECT_SPLIT 0xFFFFFFFF
+
+#define OBJECT_TYPE_NONE        0
+#define OBJECT_TYPE_SPHERE      1
+#define OBJECT_TYPE_CUBE        2
+// #define OBJECT_TYPE_VOL_CUBE    3
 
 uniform vec3 cam_origin;
 uniform vec3 cam_for;
-
-uniform sampler3D cube_density_texture;
 
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim){
     HitResult result;
@@ -54,7 +68,6 @@ HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube
         tymax = temp;
     }
 
-
     if ((tmin > tymax) || (tymin > tmax)){
         result.valid = false;
         return result;
@@ -74,8 +87,6 @@ HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube
         tzmin = tzmax;
         tzmax = temp;
     }
-
-
 
     if ((tmin > tzmax) || (tzmin > tmax)){
         result.valid = false;
@@ -113,8 +124,6 @@ HitResult solve_quadratic_form(float a, float b, float c){
 
 HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere){
     HitResult result;
-    // vec4 circle = vec4(0.0, 0.0, 4.0, 1.0); // x, y, z, position, w (4th) is radius
-    // ^ just want to test if this works def will not hardcode it like this in the future, figure something out idk
 
     vec3 L = ray_origin - sphere.xyz;
     float a = dot(ray_dir, ray_dir);
@@ -130,36 +139,11 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
     ObjectHit return_value = ObjectHit(
         vec2(0.0), // Result, doesn't have one
         false, // Valid, false as default
-        1 // object_index, where the floats start
+        1, // object_index, where the floats start
+        0
     );
 
     uint index = 0;
-
-    // for (int i = 0; i < 2; i++){
-    //     vec4 sphere_data = vec4(
-    //         data[index + 0],
-    //         data[index + 1],
-    //         data[index + 2],
-    //         data[index + 3]
-    //     );
-    //     HitResult cur_result = sphere_intersect(ray_origin, ray_dir, sphere_data);
-
-    //     if (cur_result.valid && cur_result.result.y > 0.0 && // if the hit is valid
-    //         (!return_value.valid || // if we've hit something already
-    //         cur_result.result.x < return_value.result.x)) { // if this hit is actually closer than the other one
-    //             return_value.result = cur_result.result;
-    //             return_value.valid = true;
-    //             return_value.object_index = index;
-    //     }
-    //     index += 4;
-    // }
-
-    // /*
-    // ======================== FUCKY SHIT ================================== //
-
-    // Spheres
-    // while (data[index] != OBJECT_SPLIT){
-    // while (false){
 
     uint sphere_count = int(data[index]);
     index++;
@@ -188,8 +172,6 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
     index++;
     // A split was detected on the spheres, now onto cubes
     // Cubes
-    // while (data[index] != OBJECT_SPLIT){
-    // while (false){
     for (int i = 0; i < cube_count; i++){
         vec3 cube_pos_data = vec3(
             data[index + 0],
@@ -215,10 +197,6 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
         index += 6;
     }
 
-    // index++;
-
-    // ======================== END OF FUCKY SHIT ================================== //
-
     if (return_value.result.x > return_value.result.y) return_value.result.xy = return_value.result.yx;
 
     return return_value;
@@ -229,32 +207,36 @@ void main(){
     ray_dir = normalize(ray_dir);
     ray_dir = ray_dir * frag_in.rot;
     ObjectHit hit = intersect(cam_origin, ray_dir);
-    /*
-    ObjectHit hit = ObjectHit(
-        vec2(0.0),
-        true,
-        0
-    );
-    */
+
     vec3 col = vec3(0.0);
 
     if (hit.valid && hit.result.y > 0.0){
-        // vec3 cube_entry = cam_origin + ray_origin * hit.result.x;
-        // vec3 cube_exit = cam_origin + ray_origin * hit.result.y;
+        vec3 frag_pos = cam_origin + ray_dir * hit.result.x;
+        vec3 normal;
 
-        // for (int i = 0; i < SAMPLE_POINTS; i++){
-        //     float depth = mix(hit.result.x, hit.result.y, i / SAMPLE_POINTS);
+        // switch (hit.object_type) {
+        //     case OBJECT_TYPE_SPHERE:
+        //         vec3 sphere_pos = vec3(
+        //             data[hit.object_index + 0],
+        //             data[hit.object_index + 1],
+        //             data[hit.object_index + 2]
+        //         );
+        //         float sphere_radius = data[hit.object_index + 3];
+        //         normal =
+        //         break;
 
-        //     vec3 sample_point_world = cam_origin + ray_origin * depth;
-
-        //     //Calculate the sample point relative to the cube
-        //     vec3 sample_point_cube = sample_point_world - vec3(0.0)
+        //     case OBJECT_TYPE_CUBE:
+        //         normal =
         // }
-        // col = vec3(hit.result.x);
-        col = vec3(1.0);
-    }
 
-    // col = vec3(0.0, 1.0, 0.0);
+
+        // for (uint i = 0; i < num_lights; i++){
+        //     float diffuse = ;
+
+        // }
+
+        col = vec3(1.0, 0.0, 0.0);
+    }
 
     FragColor = vec4(col, 1.0);
 }

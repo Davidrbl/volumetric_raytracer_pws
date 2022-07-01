@@ -114,6 +114,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
 
+    glfwSwapInterval(0);
+
     if (!gladLoadGL(glfwGetProcAddress)) {
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -139,9 +141,8 @@ int main() {
     float* test_buffer = NULL;
     u32 test_buffer_size = 0;
 
-    // 5 spheres, 10 cubes
-    u32 num_spheres = 2;
-    u32 num_cubes = 4;
+    u32 num_spheres = 10;
+    u32 num_cubes = 0;
 
     u32 index = 0;
 
@@ -157,7 +158,7 @@ int main() {
 
     for (u32 i = 0; i < num_spheres; i++){
         test_buffer[index + 0] = (float)(i+1);
-        test_buffer[index + 1] = (float)(i+1);
+        test_buffer[index + 1] = sin((float)(i+1));
         test_buffer[index + 2] = (float)(i+1);
         test_buffer[index + 3] = 0.5f;
 
@@ -180,46 +181,44 @@ int main() {
 
 
     // Print the test scene
-    // index = 0;
-    // while (1){
-    //     if (test_buffer[index] == (float)0xFFFFFFFF) break;
-    //     printf("Sphere -> %f %f %f %f\n",
-    //         test_buffer[index + 0],
-    //         test_buffer[index + 1],
-    //         test_buffer[index + 2],
-    //         test_buffer[index + 3]
-    //     );
+    index = 0;
+    u32 sphere_count = (u32)test_buffer[index];
+    index++;
 
-    //     index += 4;
-    // }
+    for (u32 i = 0; i < sphere_count; i++){
+        printf("Sphere -> %f %f %f %f\n",
+            test_buffer[index + 0],
+            test_buffer[index + 1],
+            test_buffer[index + 2],
+            test_buffer[index + 3]
+        );
 
-    // printf("SPLIT DETECTED\n");
+        index += 4;
+    }
 
-    // index++;
+    u32 cube_count = (u32)test_buffer[index];
+    index++;
 
-    // while (1){
-    //     if (test_buffer[index] == (float)0xFFFFFFFF) break;
-    //     printf("Cube -> %f %f %f | %f %f %f\n",
-    //         test_buffer[index + 0],
-    //         test_buffer[index + 1],
-    //         test_buffer[index + 2],
+    for (u32 i = 0; i < cube_count; i++){
+        printf("Cube -> %f %f %f | %f %f %f\n",
+            test_buffer[index + 0],
+            test_buffer[index + 1],
+            test_buffer[index + 2],
 
-    //         test_buffer[index + 3],
-    //         test_buffer[index + 4],
-    //         test_buffer[index + 5]
-    //     );
+            test_buffer[index + 3],
+            test_buffer[index + 4],
+            test_buffer[index + 5]
+        );
 
-    //     index += 6;
-    // }
+        index += 6;
+    }
 
-    // printf("SPLIT DETECTED\n");
 
-    // index++;
-
-    // for (u32 i = 0; i < test_buffer_size/ sizeof(float); i++){
-    //     printf("%d -> %f\n", i, test_buffer[i]);
-    // }
-
+#if 0
+    for (u32 i = 0; i < test_buffer_size/ sizeof(float); i++){
+        printf("%d -> %f\n", i, test_buffer[i]);
+    }
+#endif
     glCreateBuffers(1, &objects_buffer);
     glNamedBufferData(objects_buffer, test_buffer_size, test_buffer, GL_DYNAMIC_READ);
     free(test_buffer);
@@ -288,6 +287,14 @@ int main() {
             time_begin = glfwGetTime();
         }
         #endif
+
+        #if 1
+        if (frame % 1000 == 0){
+            printf("time for frame: %f\n", (glfwGetTime()-time_begin));
+            time_begin = glfwGetTime();
+        }
+        #endif
+
         frame_end_time = glfwGetTime();
         frame++;
         // printf("a\n");
