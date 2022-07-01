@@ -2,8 +2,7 @@
 
 layout (location = 0) out vec4 FragColor;
 
-layout (std430, binding = 0) readonly buffer objects
-{
+layout (std430, binding = 0) readonly buffer objects {
     float data[];
 };
 
@@ -23,16 +22,14 @@ struct ObjectHit {
     uint object_index;
 };
 
-#define PI 3.141592
-#define SAMPLE_POINTS 10
-//#define OBJECT_SPLIT 0xFFFFFFFF
+#define PI 3.14159265
 
 uniform vec3 cam_origin;
 uniform vec3 cam_for;
 
 uniform sampler3D cube_density_texture;
 
-HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim){
+HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim) {
     HitResult result;
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
     float tmin = (cube_pos.x - cube_dim.x - ray_origin.x) / ray_dir.x;
@@ -55,16 +52,17 @@ HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube
     }
 
 
-    if ((tmin > tymax) || (tymin > tmax)){
+    if (tmin > tymax || tymin > tmax) {
         result.valid = false;
         return result;
     }
 
-    if (tymin > tmin)
+    if (tymin > tmin) {
         tmin = tymin;
-
-    if (tymax < tmax)
+    }
+    if (tymax < tmax) {
         tmax = tymax;
+    }
 
     float tzmin = (cube_pos.z - cube_dim.z - ray_origin.z) / ray_dir.z;
     float tzmax = (cube_pos.z + cube_dim.z - ray_origin.z) / ray_dir.z;
@@ -75,29 +73,30 @@ HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube
         tzmax = temp;
     }
 
-
-
-    if ((tmin > tzmax) || (tzmin > tmax)){
+    if (tmin > tzmax || tzmin > tmax) {
         result.valid = false;
         return result;
     }
 
-    if (tzmin > tmin)
+    if (tzmin > tmin) {
         tmin = tzmin;
-
-    if (tzmax < tmax)
+    }
+    if (tzmax < tmax) {
         tmax = tzmax;
+    }
 
     result.valid = true;
     result.result.x = tmin;
     result.result.y = tmax;
 
-    if (result.result.x > result.result.y) result.result.xy = result.result.yx;
+    if (result.result.x > result.result.y) {
+        result.result.xy = result.result.yx;
+    }
 
     return result;
 }
 
-HitResult solve_quadratic_form(float a, float b, float c){
+HitResult solve_quadratic_form(float a, float b, float c) {
     HitResult result;
     float disc = b*b - 4*a*c;
     if (disc < 0) {
@@ -111,7 +110,7 @@ HitResult solve_quadratic_form(float a, float b, float c){
     return result;
 }
 
-HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere){
+HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere) {
     HitResult result;
     // vec4 circle = vec4(0.0, 0.0, 4.0, 1.0); // x, y, z, position, w (4th) is radius
     // ^ just want to test if this works def will not hardcode it like this in the future, figure something out idk
@@ -126,7 +125,7 @@ HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere){
     return result;
 }
 
-ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
+ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
     ObjectHit return_value = ObjectHit(
         vec2(0.0), // Result, doesn't have one
         false, // Valid, false as default
@@ -164,7 +163,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
     uint sphere_count = int(data[index]);
     index++;
 
-    for (int i = 0; i < sphere_count; i++){
+    for (int i = 0; i < sphere_count; i++) {
         vec4 sphere_data = vec4(
             data[index + 0],
             data[index + 1],
@@ -190,7 +189,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
     // Cubes
     // while (data[index] != OBJECT_SPLIT){
     // while (false){
-    for (int i = 0; i < cube_count; i++){
+    for (int i = 0; i < cube_count; i++) {
         vec3 cube_pos_data = vec3(
             data[index + 0],
             data[index + 1],
@@ -206,7 +205,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
 
         if (cur_result.valid && cur_result.result.y > 0.0 &&
             (!return_value.valid ||
-            cur_result.result.x < return_value.result.x)){
+            cur_result.result.x < return_value.result.x)) {
                 return_value.result = cur_result.result;
                 return_value.valid = true;
                 return_value.object_index = index;
@@ -219,7 +218,9 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
 
     // ======================== END OF FUCKY SHIT ================================== //
 
-    if (return_value.result.x > return_value.result.y) return_value.result.xy = return_value.result.yx;
+    if (return_value.result.x > return_value.result.y) {
+        return_value.result.xy = return_value.result.yx;
+    }
 
     return return_value;
 }
@@ -227,8 +228,15 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir){
 void main(){
     vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
     ray_dir = normalize(ray_dir);
-    ray_dir = ray_dir * frag_in.rot;
-    ObjectHit hit = intersect(cam_origin, ray_dir);
+    ray_dir *= frag_in.rot;
+    ObjectHit hit = ObjectHit(vec2(0.0), true, 0);
+    float dist = 0.0;
+    float ys = 0.0;
+    while (hit.valid && hit.result.y >= 0.0) {
+        dist += hit.result.y - hit.result.x;
+        ys += hit.result.y + 0.01;
+        hit = intersect(cam_origin + ray_dir * ys, ray_dir);
+    }
     /*
     ObjectHit hit = ObjectHit(
         vec2(0.0),
@@ -236,23 +244,7 @@ void main(){
         0
     );
     */
-    vec3 col = vec3(0.0);
-
-    if (hit.valid && hit.result.y > 0.0){
-        // vec3 cube_entry = cam_origin + ray_origin * hit.result.x;
-        // vec3 cube_exit = cam_origin + ray_origin * hit.result.y;
-
-        // for (int i = 0; i < SAMPLE_POINTS; i++){
-        //     float depth = mix(hit.result.x, hit.result.y, i / SAMPLE_POINTS);
-
-        //     vec3 sample_point_world = cam_origin + ray_origin * depth;
-
-        //     //Calculate the sample point relative to the cube
-        //     vec3 sample_point_cube = sample_point_world - vec3(0.0)
-        // }
-        // col = vec3(hit.result.x);
-        col = vec3(1.0);
-    }
+    vec3 col = vec3(dist / 2);
 
     // col = vec3(0.0, 1.0, 0.0);
 
