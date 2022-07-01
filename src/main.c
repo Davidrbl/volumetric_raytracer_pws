@@ -47,7 +47,7 @@ void GLAPIENTRY gl_error_callback(
 
     if (severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
         fprintf(
-            stderr, "GL_ERROR\nsource: %x\ntype: %x\nid: %u\nseverity: %x\nlength: %d\nmessage: %s\nuserParam: %p\n",
+            stderr, "GL_ERROR\nsource: 0x%x\ntype: 0x%x\nid: %u\nseverity: 0x%x\nlength: %d\nmessage: %s\nuserParam: 0x%p\n",
             source,
             type,
             id,
