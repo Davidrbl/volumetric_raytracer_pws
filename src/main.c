@@ -182,7 +182,7 @@ int main() {
     // u32 test_buffer_size = 0;
 
     u32 num_spheres = 10;
-    u32 num_cubes = 0;
+    u32 num_cubes = 10;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + 2) * (i64)sizeof(float); // for the split floats
 
@@ -279,26 +279,26 @@ int main() {
     GLuint VAO, VBO, EBO;
     {
         glCreateVertexArrays(1, &VAO);
-        glCreateBuffers(1, &VBO);
-        glCreateBuffers(1, &EBO);
+        // glCreateBuffers(1, &VBO);
+        // glCreateBuffers(1, &EBO);
 
-        glNamedBufferData(VBO, 0, NULL, GL_STATIC_DRAW);
-        glNamedBufferData(EBO, 0, NULL, GL_STATIC_DRAW);
+        // glNamedBufferData(VBO, 0, NULL, GL_STATIC_DRAW);
+        // glNamedBufferData(EBO, 0, NULL, GL_STATIC_DRAW);
 
-        glEnableVertexArrayAttrib(VAO, 0);
-        glVertexArrayAttribBinding(VAO, 0, 0);
-        glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+        // glEnableVertexArrayAttrib(VAO, 0);
+        // glVertexArrayAttribBinding(VAO, 0, 0);
+        // glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
 
-        glEnableVertexArrayAttrib(VAO, 1);
-        glVertexArrayAttribBinding(VAO, 1, 0);
-        glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 0*sizeof(float));
+        // glEnableVertexArrayAttrib(VAO, 1);
+        // glVertexArrayAttribBinding(VAO, 1, 0);
+        // glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 0*sizeof(float));
 
-        glEnableVertexArrayAttrib(VAO, 2);
-        glVertexArrayAttribBinding(VAO, 2, 0);
-        glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_FALSE, 0*sizeof(float));
+        // glEnableVertexArrayAttrib(VAO, 2);
+        // glVertexArrayAttribBinding(VAO, 2, 0);
+        // glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_FALSE, 0*sizeof(float));
 
-        glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 0*sizeof(float));
-        glVertexArrayElementBuffer(VAO, EBO);
+        // glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 0*sizeof(float));
+        // glVertexArrayElementBuffer(VAO, EBO);
     }
 
     while (!glfwWindowShouldClose(window)) {

@@ -211,7 +211,9 @@ void main(){
     vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
     ray_dir = normalize(ray_dir);
     ray_dir *= frag_in.rot;
-    ObjectHit hit = ObjectHit(vec2(0.0), true, 0);
+
+    /*
+    ObjectHit hit = ObjectHit(vec2(0.0), true, 0, 0);
     float dist = 0.0;
     float ys = 0.0;
     while (hit.valid && hit.result.y >= 0.0) {
@@ -219,6 +221,7 @@ void main(){
         ys += hit.result.y + 0.01;
         hit = intersect(cam_origin + ray_dir * ys, ray_dir);
     }
+    */
     /*
     ObjectHit hit = ObjectHit(
         vec2(0.0),
@@ -253,7 +256,7 @@ void main(){
         // }
     */
 
-    vec3 col = vec3(dist / 2);
+    // vec3 col = vec3(dist / 2);
 
 
         // for (uint i = 0; i < num_lights; i++){
@@ -261,8 +264,7 @@ void main(){
 
         // }
 
-        col = vec3(1.0, 0.0, 0.0);
-    }
+        // col = vec3(1.0, 0.0, 0.0);
 
     FragColor = vec4(col, 1.0);
 }
