@@ -46,16 +46,13 @@ void create_shader(const char* path, GLenum type, u32* dest) {
     free(source);
 }
 
-void create_program2s(const char* vertex_shader_path, const char* fragment_shader_path, u32* dest) {
+void create_program_compute(const char* compute_shader_path, u32* dest) {
     *dest = glCreateProgram();
 
-    u32 vertex_shader = 0;
-    u32 fragment_shader = 0;
-    create_shader(vertex_shader_path,   GL_VERTEX_SHADER,   &vertex_shader);
-    create_shader(fragment_shader_path, GL_FRAGMENT_SHADER, &fragment_shader);
+    u32 compute_shader = 0;
+    create_shader(compute_shader_path, GL_VERTEX_SHADER, &compute_shader);
 
-    glAttachShader(*dest, vertex_shader);
-    glAttachShader(*dest, fragment_shader);
+    glAttachShader(*dest, compute_shader);
 
     glLinkProgram(*dest);
 
@@ -65,34 +62,11 @@ void create_program2s(const char* vertex_shader_path, const char* fragment_shade
         fprintf(stderr, "SHADER LINK ERROR\n");
         exit(1);
     }
-}
 
-void create_program3s(const char* vertex_shader_path, const char* geometry_shader_path, const char* fragment_shader_path, u32* dest) {
-    *dest = glCreateProgram();
-
-    u32 vertex_shader = 0;
-    u32 geometry_shader = 0;
-    u32 fragment_shader = 0;
-    create_shader(vertex_shader_path,   GL_VERTEX_SHADER,   &vertex_shader);
-    create_shader(geometry_shader_path, GL_GEOMETRY_SHADER, &geometry_shader);
-    create_shader(fragment_shader_path, GL_FRAGMENT_SHADER, &fragment_shader);
-
-    glAttachShader(*dest, vertex_shader);
-    glAttachShader(*dest, geometry_shader);
-    glAttachShader(*dest, fragment_shader);
-
-    glLinkProgram(*dest);
-
-    i32 succes = 0;
-    glGetProgramiv(*dest, GL_LINK_STATUS, &succes);
-    if (succes != GL_TRUE) {
-        fprintf(stderr, "SHADER LINK ERROR\n");
-        exit(1);
-    }
+    glDeleteShader(compute_shader);
 }
 
 void create_program(
-    const char* compute_shader_path,
     const char* vertex_shader_path,
     const char* tessellation_control_shader_path,
     const char* tessellation_evaluation_shader_path,
@@ -102,17 +76,12 @@ void create_program(
 ) {
     *dest = glCreateProgram();
 
-    u32 compute_shader = 0;
     u32 vertex_shader = 0;
     u32 tessellation_control_shader = 0;
     u32 tessellation_evaluation_shader = 0;
     u32 geometry_shader = 0;
     u32 fragment_shader = 0;
 
-    if (compute_shader_path) {
-        create_shader(compute_shader_path, GL_COMPUTE_SHADER, &compute_shader);
-        glAttachShader(*dest, compute_shader);
-    }
     if (vertex_shader_path) {
         create_shader(vertex_shader_path, GL_VERTEX_SHADER, &vertex_shader);
         glAttachShader(*dest, vertex_shader);

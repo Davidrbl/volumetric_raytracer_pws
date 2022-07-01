@@ -169,7 +169,6 @@ int main() {
     // Shader program setup
     u32 main_program = 0;
     create_program(
-        NULL,
         "src/shaders/main.vert",
         NULL,
         NULL,
