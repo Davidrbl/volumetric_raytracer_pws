@@ -38,7 +38,7 @@ all: $(BIN)
 
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@$(MKDIR) "$(DEPDIR)"
-	@$(CC) $(CPPFLAGS) -M "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o $@: ,g' > "$@"
+	@$(CC) $(CPPFLAGS) -M "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o: ,g' > "$@"
 
 include $(DEPS)
 
