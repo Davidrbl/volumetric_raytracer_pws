@@ -123,8 +123,8 @@ HitResult solve_quadratic_form(float a, float b, float c) {
         result.valid = false;
         return result;
     };
-    result.result.x = (-b + sqrt(disc)) / (2 * a);
-    result.result.y = (-b - sqrt(disc)) / (2 * a);
+    result.result.x = (-b - sqrt(disc)) / (2 * a);
+    result.result.y = (-b + sqrt(disc)) / (2 * a);
     result.valid = true;
 
     return result;
@@ -136,7 +136,7 @@ HitResult sphere_intersect(vec3 ray_origin, vec3 ray_dir, vec4 sphere) {
     vec3 L = ray_origin - sphere.xyz;
     float a = dot(ray_dir, ray_dir);
     float b = 2 * dot(ray_dir, L);
-    float dist = length(ray_origin - sphere.xyz);
+    float dist = length(L);
     float c = dist*dist - sphere.w * sphere.w;
 
     result = solve_quadratic_form(a, b, c);
@@ -171,6 +171,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
             return_value.result = cur_result.result;
             return_value.valid = true;
             return_value.object_index = index;
+            return_value.object_type = OBJECT_TYPE_SPHERE;
         }
 
         index += 4;
@@ -200,12 +201,11 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
             return_value.result = cur_result.result;
             return_value.valid = true;
             return_value.object_index = index;
+            return_value.object_type = OBJECT_TYPE_CUBE;
         }
 
         index += 6;
     }
-
-    if (return_value.result.x > return_value.result.y) return_value.result.xy = return_value.result.yx;
 
     return return_value;
 }
@@ -217,7 +217,7 @@ void main() {
     ObjectHit hit = ObjectHit(vec2(0.0), true, 0, 0);
     float dist = 0.0;
     float ys = 0.0;
-    while (hit.valid && hit.result.y >= 0.0) {
+    while (hit.valid) {
         dist += hit.result.y - max(hit.result.x, 0);
         ys += hit.result.y + SMALL_NUM;
         hit = intersect(cam_origin + ray_dir * ys, ray_dir);
