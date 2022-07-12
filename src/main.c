@@ -187,10 +187,11 @@ int main() {
         &texture_program
     );
 
-    u32 framebuffer;
-    u32 framebuffer_texture;
+    u32 framebuffer = 0;
+    u32 framebuffer_texture = 0;
 
-    u32 framebuffer_width = 1024, framebuffer_height = 1024;
+    i32 framebuffer_width = 1024;
+    i32 framebuffer_height = 1024;
 
     {
         glCreateFramebuffers(1, &framebuffer);
@@ -203,7 +204,7 @@ int main() {
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        u32 renderbuffer;
+        u32 renderbuffer = 0;
         // This is just a dummy thing, its sorta like a texture for depth and stencil,
         // but you cant read this and its faster.
         // we dont want to read it anyway so this is cool.
@@ -230,7 +231,7 @@ int main() {
     float* test_buffer = malloc(test_buffer_size);
 
     i64 index = 0;
-    test_buffer[index] = (float)num_spheres;
+    test_buffer[index] = *(float*)&num_spheres;
     index++;
 
     for (i64 i = 0; i < num_spheres; i++) {
@@ -240,7 +241,7 @@ int main() {
         test_buffer[index++] = .5f;
     }
 
-    test_buffer[index] = (float)num_cubes;
+    test_buffer[index] = *(float*)&num_cubes;
     index++;
 
     for (i64 i = 0; i < num_cubes; i++) {

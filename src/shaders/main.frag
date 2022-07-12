@@ -153,7 +153,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
 
     uint index = 0;
 
-    uint sphere_count = uint(data[index]);
+    uint sphere_count = floatBitsToUint(data[index]);
     index++;
 
     for (int i = 0; i < sphere_count; i++) {
@@ -177,7 +177,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
         index += 4;
     }
 
-    uint cube_count = uint(data[index]);
+    uint cube_count = floatBitsToUint(data[index]);
     index++;
     // A split was detected on the spheres, now onto cubes
     // Cubes
