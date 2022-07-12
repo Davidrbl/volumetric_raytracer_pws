@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <logging.h>
 #include <shader.h>
 
 void create_shader(const char* path, GLenum type, u32* dest) {
@@ -39,7 +40,7 @@ void create_shader(const char* path, GLenum type, u32* dest) {
 
         glDeleteShader(*dest);
 
-        fprintf(stderr, "SHADER COMPILE ERROR: %s\n%s\n", path, error_string);
+        tlog(5, "SHADER COMPILE ERROR: %s\n%s\n", path, error_string);
         exit(1);
     }
 
@@ -59,7 +60,7 @@ void create_program_compute(const char* compute_shader_path, u32* dest) {
     i32 succes = 0;
     glGetProgramiv(*dest, GL_LINK_STATUS, &succes);
     if (succes != GL_TRUE) {
-        fprintf(stderr, "SHADER LINK ERROR\n");
+        tlog(5, "SHADER LINK ERROR\n");
         exit(1);
     }
 
@@ -108,7 +109,7 @@ void create_program(
     i32 succes = 0;
     glGetProgramiv(*dest, GL_LINK_STATUS, &succes);
     if (succes != GL_TRUE) {
-        fprintf(stderr, "SHADER LINK ERROR\n");
+        tlog(5, "SHADER LINK ERROR\n");
         exit(1);
     }
 
