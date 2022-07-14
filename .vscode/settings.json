@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "gl.h": "c"
+        "gl.h": "c",
+        "standard_types.h": "c",
+        "texture.h": "c"
     }
 }

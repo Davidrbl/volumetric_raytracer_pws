@@ -156,7 +156,7 @@ int main() {
         return 3;
     }
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
@@ -190,8 +190,7 @@ int main() {
     u32 framebuffer;
     u32 framebuffer_texture;
 
-    u32 framebuffer_width = 1024, framebuffer_height = 1024;
-
+    u32 framebuffer_width = 1080, framebuffer_height = 720;
     {
         glCreateFramebuffers(1, &framebuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &framebuffer_texture);
@@ -218,14 +217,15 @@ int main() {
         // Check if we have added everything needed for the framebuffer
 
         GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
-        printf("Framebufferstatus -> %X\n", status);
+        // printf("Framebufferstatus -> %X\n", status);
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
     }
 
     u32 num_spheres = 4;
     u32 num_cubes = 4;
+    u32 num_vol_cubes = 4;
 
-    i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + 2) * (i64)sizeof(float); // for the split floats
+    i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
 
     float* test_buffer = malloc(test_buffer_size);
 
@@ -250,6 +250,21 @@ int main() {
         test_buffer[index++] = .5f;
         test_buffer[index++] = .5f;
         test_buffer[index++] = .5f;
+    }
+
+    test_buffer[index] = (float)num_vol_cubes;
+    index++;
+
+    for (i64 i = 0; i < num_vol_cubes; i++){
+        test_buffer[index++] = 0.0;
+        test_buffer[index++] = (float)(i+1);
+        test_buffer[index++] = 0.0;
+
+        test_buffer[index++] = .5;
+        test_buffer[index++] = .5;
+        test_buffer[index++] = .5;
+
+        test_buffer[index++] = 1.0;
     }
 
     u32 objects_buffer = 0;
@@ -300,11 +315,11 @@ int main() {
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
+        glViewport(0, 0, framebuffer_width, framebuffer_height);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glUseProgram(main_program);
-
-        // glBindVertexArray(vao);
 
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
@@ -315,12 +330,11 @@ int main() {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(texture_program);
-
-        // glBindVertexArray(vao);
-
 
         glBindTextureUnit(0, framebuffer_texture);
         glUniform1i(glGetUniformLocation(texture_program, "texture_ID"), 0);
