@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 
+#include <logging.h>
 #include <shader.h>
 #include <standard_types.h>
 #include <texture.h>
@@ -15,10 +16,14 @@
 #define MOUSE_SENSITIVITY .001f
 #define CAMERA_SPEED 1.f
 
+#ifndef LOGLEVEL
+#define LOGLEVEL 1
+#endif
+
 #define PI 3.14159265f
 
 static void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error: %d %s\n", error, description);
+    tlog(5, "GLFW error: %d %s\n", error, description);
 }
 
 #pragma GCC diagnostic push
@@ -46,8 +51,9 @@ void GLAPIENTRY gl_error_callback(
     // GL_DEBUG_SEVERITY_LOW;
 
     if (severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
-        fprintf(
-            stderr, "GL_ERROR\nsource: 0x%x\ntype: 0x%x\nid: %u\nseverity: 0x%x\nlength: %d\nmessage: %s\nuserParam: 0x%p\n",
+        tlog(
+            5,
+            "GL_ERROR\nsource: 0x%x\ntype: 0x%x\nid: %u\nseverity: 0x%x\nlength: %d\nmessage: %s\nuserParam: 0x%p\n",
             source,
             type,
             id,
@@ -122,6 +128,7 @@ static inline void calc_movement(
 }
 
 int main() {
+    tlog_init(LOGLEVEL, stderr);
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()) {
         return 1;
@@ -187,10 +194,12 @@ int main() {
         &texture_program
     );
 
-    u32 framebuffer;
-    u32 framebuffer_texture;
+    u32 framebuffer = 0;
+    u32 framebuffer_texture = 0;
 
-    u32 framebuffer_width = 1080, framebuffer_height = 720;
+    i32 framebuffer_width = 1024;
+    i32 framebuffer_height = 1024;
+
     {
         glCreateFramebuffers(1, &framebuffer);
         glCreateTextures(GL_TEXTURE_2D, 1, &framebuffer_texture);
@@ -202,7 +211,7 @@ int main() {
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(framebuffer_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        u32 renderbuffer;
+        u32 renderbuffer = 0;
         // This is just a dummy thing, its sorta like a texture for depth and stencil,
         // but you cant read this and its faster.
         // we dont want to read it anyway so this is cool.
@@ -217,7 +226,7 @@ int main() {
         // Check if we have added everything needed for the framebuffer
 
         GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
-        // printf("Framebufferstatus -> %X\n", status);
+        tlog(0, "Framebufferstatus -> %X\n", status);
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
     }
 
@@ -230,7 +239,7 @@ int main() {
     float* test_buffer = malloc(test_buffer_size);
 
     i64 index = 0;
-    test_buffer[index] = (float)num_spheres;
+    test_buffer[index] = *(float*)&num_spheres;
     index++;
 
     for (i64 i = 0; i < num_spheres; i++) {
@@ -240,7 +249,7 @@ int main() {
         test_buffer[index++] = .5f;
     }
 
-    test_buffer[index] = (float)num_cubes;
+    test_buffer[index] = *(float*)&num_cubes;
     index++;
 
     for (i64 i = 0; i < num_cubes; i++) {
@@ -346,24 +355,28 @@ int main() {
 
         if (frame % 100 == 0) {
             if (glfwGetKey(window, GLFW_KEY_C)) {
-                printf("cam_pos -> %f | %f | %f\n",
+                tlog(
+                    0,
+                    "cam_pos -> %f | %f | %f\n",
                     cam_pos[0],
                     cam_pos[1],
                     cam_pos[2]
                 );
-                printf("cam_rot -> %f | %f\n", cam_rot[0], cam_rot[1]);
-                printf("cam_for -> %f | %f | %f\n",
+                tlog(0, "cam_rot -> %f | %f\n", cam_rot[0], cam_rot[1]);
+                tlog(
+                    0,
+                    "cam_for -> %f | %f | %f\n",
                     cam_for[0],
                     cam_for[1],
                     cam_for[2]
                 );
-                printf("mouse_x: %f | %f\n", mouse_x[0], mouse_x[1]);
-                printf("mouse_y: %f | %f\n", mouse_y[0], mouse_y[1]);
-                printf("\n");
+                tlog(0, "mouse_x: %f | %f\n", mouse_x[0], mouse_x[1]);
+                tlog(0, "mouse_y: %f | %f\n", mouse_y[0], mouse_y[1]);
+                tlog(0, "\n");
             }
             if (glfwGetKey(window, GLFW_KEY_T)) {
-                printf("time for frame: %f ms\n", (glfwGetTime() - time_begin) * 10.);
-                printf("\n");
+                tlog(0, "time for frame: %f ms\n", (glfwGetTime() - time_begin) * 10.);
+                tlog(0, "\n");
             }
             time_begin = glfwGetTime();
         }
