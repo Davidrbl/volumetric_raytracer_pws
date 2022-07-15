@@ -96,11 +96,11 @@ static inline void calc_movement(
     cam_rot[0] += (float)(mouse_y[1] - mouse_y[0]) * MOUSE_SENSITIVITY;
     cam_rot[1] += (float)(mouse_x[0] - mouse_x[1]) * MOUSE_SENSITIVITY;
 
-    if (cam_rot[0] > .5f * PI) {
-        cam_rot[0] = .5f * PI;
+    if (cam_rot[0] > .49f * PI) {
+        cam_rot[0] = .49f * PI;
     }
-    if (cam_rot[0] < -.5f * PI) {
-        cam_rot[0] = -.5f * PI;
+    if (cam_rot[0] < -.49f * PI) {
+        cam_rot[0] = -.49f * PI;
     }
 
     // W and S
@@ -273,8 +273,8 @@ int main() {
         test_buffer[index++] = .5;
         test_buffer[index++] = .5;
 
-        test_buffer[index++] = 1.0 / (i + 1);
-        // test_buffer[index++] = 0.7;
+        // test_buffer[index++] = 1.0 / (i + 1);
+        test_buffer[index++] = 1.0;
     }
 
     u32 objects_buffer = 0;

@@ -257,18 +257,18 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 
         switch (hit.object_type){
             case OBJECT_TYPE_SPHERE:
-                color = vec3(1.0, 0.0, 0.0) * alpha;
+                color += vec3(1.0, 0.0, 0.0) * alpha;
                 stop = true;
                 break;
 
             case OBJECT_TYPE_CUBE:
-                color = vec3(0.0, 1.0, 0.0) * alpha;
+                color += vec3(0.0, 1.0, 0.0) * alpha;
                 stop = true;
                 break;
 
             case OBJECT_TYPE_VOL_CUBE:
                 vec4 vol_cube_col;
-                vol_cube_col.rgb = vec3(1.0);
+                vol_cube_col.rgb = vec3(0.0, 0.0, 1.0);
                 vol_cube_col.a = hit.result.y - max(hit.result.x, 0.0); // Test value, we need to calculate this
                 vol_cube_col.a /= 1.5;
 
@@ -287,7 +287,7 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 break;
 
             case OBJECT_TYPE_NONE:
-                color = vec3(1.0) * alpha;
+                color += vec3(1.0) * alpha;
                 stop = true;
                 break;
         }
