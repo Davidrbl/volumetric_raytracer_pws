@@ -273,7 +273,8 @@ int main() {
         test_buffer[index++] = .5;
         test_buffer[index++] = .5;
 
-        test_buffer[index++] = 1.0;
+        test_buffer[index++] = 1.0 / (i + 1);
+        // test_buffer[index++] = 0.7;
     }
 
     u32 objects_buffer = 0;

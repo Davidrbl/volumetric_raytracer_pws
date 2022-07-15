@@ -241,41 +241,6 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
     return return_value;
 }
 
-// vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
-//     vec3 color = vec3(0.0);
-
-//     ObjectHit hit = intersect(ray_origin, ray_dir);
-
-//     if (!hit.valid) return vec3(0.0);
-
-//     switch (hit.object_type){
-//         case OBJECT_TYPE_SPHERE:
-//             color = vec3(1.0, 0.0, 0.0);
-//             break;
-
-//         case OBJECT_TYPE_CUBE:
-//             color = vec3(0.0, 1.0, 0.0);
-//             break;
-
-//         // case OBJECT_TYPE_VOL_CUBE:
-//         //     vec4 vol_cube_col;
-//         //     vol_cube_col.rgb = vec3(1.0);
-//         //     vol_cube_col.a = 0.5; // Test value, we need to calculate this
-
-//         //     vol_cube_col.a = clamp(vol_cube_col.a, 0.0, 1.0);
-
-//         //     float next_depth = hit.result.y + SMALL_NUM;
-//         //     vec3 next_origin = ray_origin + ray_dir * next_depth;
-//         //     vec3 behind_color = ray_color(next_origin, ray_origin);
-
-//         //     color = vol_cube_col.rgb * vol_cube_col.a +         // This is the volumetric cube part
-//         //             behind_color.rgb * (1.0-vol_cube_col.a);    // This is the stuff behind
-//         //     break;
-//     }
-
-//     return color;
-// }
-
 vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
     vec3 color = vec3(0.0);
 
@@ -290,8 +255,6 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
     while (!stop){
         ObjectHit hit = intersect(ray_origin, ray_dir);
 
-        // if (!hit.valid) return vec3(0.0);
-
         switch (hit.object_type){
             case OBJECT_TYPE_SPHERE:
                 color = vec3(1.0, 0.0, 0.0) * alpha;
@@ -305,11 +268,13 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 
             case OBJECT_TYPE_VOL_CUBE:
                 vec4 vol_cube_col;
-                vol_cube_col.rgb = vec3(0.0);
+                vol_cube_col.rgb = vec3(1.0);
                 vol_cube_col.a = hit.result.y - max(hit.result.x, 0.0); // Test value, we need to calculate this
                 vol_cube_col.a /= 1.5;
 
-                vol_cube_col = 1.0 - exp(-vol_cube_col);
+                float half_thickness = data[hit.object_index + 6];
+
+                vol_cube_col.a = 1.0 - pow(0.5, vol_cube_col.a / half_thickness);
 
                 vol_cube_col.a = clamp(vol_cube_col.a, 0.0, 1.0);
 
@@ -317,10 +282,8 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 ray_origin = ray_origin + ray_dir * next_depth;
 
                 color += vol_cube_col.rgb * alpha;        // This is the volumetric cube part
-                // color += vol_cube_col.rgb * vol_cube_col.a;        // This is the volumetric cube part
                 alpha *= 1.0 - vol_cube_col.a;
 
-                // stop = true;
                 break;
 
             case OBJECT_TYPE_NONE:
