@@ -9,4 +9,5 @@ void create_texture3D(
     u32* texture
 );
 
+void create_cubemap(const char* adresses[6], u32* dest);
 #endif // TEXTURE_H

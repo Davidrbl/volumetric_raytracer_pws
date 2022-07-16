@@ -273,8 +273,8 @@ int main() {
         test_buffer[index++] = .5;
         test_buffer[index++] = .5;
 
-        // test_buffer[index++] = 1.0 / (i + 1);
-        test_buffer[index++] = 1.0;
+        test_buffer[index++] = 1.0 / (i + 1);
+        // test_buffer[index++] = 1.0;
     }
 
     u32 objects_buffer = 0;
@@ -284,6 +284,24 @@ int main() {
     free(test_buffer);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
+
+    // Skybox setup
+    const char* skybox_textures_paths[6] = {
+        "textures/positive_x.jpg",
+        "textures/negative_x.jpg",
+        "textures/positive_y.jpg",
+        "textures/negative_y.jpg",
+        "textures/positive_z.jpg",
+        "textures/negative_z.jpg"
+    };
+
+    u32 skybox_texture;
+    create_cubemap(
+        skybox_textures_paths,
+        &skybox_texture
+    );
+
+    glBindTextureUnit(1, skybox_texture);
 
     double time_begin = 0.;
     u64 frame = 1;
@@ -331,6 +349,7 @@ int main() {
 
         glUseProgram(main_program);
 
+        glUniform1i(glGetUniformLocation(main_program, "skybox_texture"), 1);
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
 

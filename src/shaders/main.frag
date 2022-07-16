@@ -50,6 +50,7 @@ uniform vec3 cam_origin;
 uniform vec3 cam_for;
 
 // uniform sampler3D cube_density_texture;
+uniform samplerCube skybox_texture;
 
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim) {
     HitResult result;
@@ -248,15 +249,59 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 
     while (influence > 0.0){
         ObjectHit hit = intersect(ray_origin, ray_dir);
+        vec3 hit_pos = ray_origin + ray_dir * hit.result.x;
+        vec3 normal = vec3(0.0);
 
         switch (hit.object_type){
             case OBJECT_TYPE_SPHERE:
-                color += vec3(1.0, 0.0, 0.0) * influence;
+                vec3 sphere_pos = vec3(
+                    data[hit.object_index + 0],
+                    data[hit.object_index + 1],
+                    data[hit.object_index + 2]
+                );
+
+                float r = data[hit.object_index + 3];
+
+                normal = (hit_pos - sphere_pos) / r;
+
+                color += vec3(normal / 2.0 + 0.5) * influence;
                 influence = 0.0;
                 break;
 
             case OBJECT_TYPE_CUBE:
-                color += vec3(0.0, 1.0, 0.0) * influence;
+                vec3 cube_pos = vec3(
+                    data[hit.object_index + 0],
+                    data[hit.object_index + 1],
+                    data[hit.object_index + 2]
+                );
+                vec3 cube_dim = vec3(
+                    data[hit.object_index + 3],
+                    data[hit.object_index + 4],
+                    data[hit.object_index + 5]
+                );
+
+                vec3 rel_hit_pos = hit_pos - cube_pos;
+                rel_hit_pos /= cube_dim;
+
+                float pos[3] = {rel_hit_pos.x, rel_hit_pos.y, rel_hit_pos.z};
+                uint highest_index = 0;
+
+                float highest = 0.0;
+
+                for (int i = 0; i < 3; i++){
+                    if (abs(pos[i]) > abs(highest)){
+                        highest_index = i;
+                        highest = pos[i];
+                    }
+                }
+
+                normal = vec3(0.0);
+
+                normal.x += pos[0] / abs(pos[0]) * int(highest_index == 0);
+                normal.y += pos[1] / abs(pos[1]) * int(highest_index == 1);
+                normal.z += pos[2] / abs(pos[2]) * int(highest_index == 2);
+
+                color += vec3(normal / 2.0 + 0.5) * influence;
                 influence = 0.0;
                 break;
 
@@ -281,7 +326,8 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 break;
 
             case OBJECT_TYPE_NONE:
-                color += vec3(1.0) * influence;
+                vec3 skybox_col = texture(skybox_texture, ray_dir).rgb;
+                color += skybox_col * influence;
                 influence = 0.0;
                 break;
         }
@@ -291,20 +337,8 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 }
 
 void main() {
-    vec3 ray_dir = vec3(frag_in.uv*2.0-1.0, 1.0);
-    ray_dir = normalize(ray_dir);
+    vec3 ray_dir = normalize(vec3(frag_in.uv*2.0-1.0, 1.0));
     ray_dir *= frag_in.rot;
-    // ObjectHit hit = ObjectHit(vec2(0.0), true, 0, 0);
-    // float dist = 0.0;
-    // float ys = 0.0;
-    // while (hit.valid) {
-    //     dist += hit.result.y - max(hit.result.x, 0);
-    //     ys += hit.result.y + SMALL_NUM;
-    //     hit = intersect(cam_origin + ray_dir * ys, ray_dir);
-    // }
-    // vec3 col = vec3(1.0);
-    // FragColor = vec4(col, dist/2.0);
-
     vec3 col = ray_color(cam_origin, ray_dir);
 
     FragColor = vec4(col, 1.0);

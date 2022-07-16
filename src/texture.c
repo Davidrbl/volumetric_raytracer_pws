@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
 #include <glad/gl.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include <texture.h>
 
@@ -46,4 +48,55 @@ void create_texture3D(
     glTextureParameteri(*texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     free(tex_buf);
+}
+
+void create_cubemap(const char* adresses[6], u32* dest){
+    /*
+    Right,
+    Left,
+    Top,
+    Bottom,
+    Back,
+    Front
+    */
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, dest);
+
+  i32 width, height, channels;
+  GLint internal_format = GL_RGB;
+
+  for (int i = 0; i < 6; i++){
+    unsigned char* image_data = stbi_load(adresses[i], &width, &height, &channels, STBI_rgb_alpha);
+
+    if (i == 0) glTextureStorage2D(*dest, 1, GL_RGB8, width, height);
+
+    if (channels == 4) internal_format = GL_RGBA;
+    else if (channels == 3) internal_format = GL_RGB;
+
+    if (image_data == NULL) {
+      printf("Cubemap texture loading error\n");
+      exit(1);
+    }
+
+    glTextureSubImage3D(*dest,
+                        0,
+                        0,
+                        0,
+                        i,
+                        width,
+                        height,
+                        1,
+                        GL_RGBA,
+                        GL_UNSIGNED_BYTE,
+                        image_data);
+
+    stbi_image_free(image_data);
+  }
+
+  glTextureParameteri(*dest, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTextureParameteri(*dest, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTextureParameteri(*dest, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glTextureParameteri(*dest, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTextureParameteri(*dest, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glGenerateTextureMipmap(*dest);
 }
