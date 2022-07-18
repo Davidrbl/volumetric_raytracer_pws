@@ -285,6 +285,30 @@ int main() {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
 
+    u32 num_lights = 1;
+
+    u32 lights_buffer_size = 1 * sizeof(u32) + num_lights * (4 * sizeof(float));
+
+    float* lights_buffer_data = malloc(lights_buffer_size);
+
+    // index = 0;
+    lights_buffer_data[0] = *(float*)num_lights;
+
+    for (u32 i = 0; i < num_lights; i++){
+        lights_buffer_data[1+i * 4 + 0] = 0.0; // X pos
+        lights_buffer_data[1+i * 4 + 1] = 0.0; // Y pos
+        lights_buffer_data[1+i * 4 + 2] = 0.0; // Z pos
+        lights_buffer_data[1+i * 4 + 3] = 1.0; // Power
+    }
+
+    u32 lights_buffer = 0;
+
+    glCreateBuffers(1, &lights_buffer);
+    glNamedBufferData(lights_buffer, lights_buffer_size, lights_buffer_data, GL_DYNAMIC_READ);
+    free(lights_buffer_data);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, lights_buffer);
+
     // Skybox setup
     const char* skybox_textures_paths[6] = {
         "textures/positive_x.jpg",
@@ -352,6 +376,7 @@ int main() {
         glUniform1i(glGetUniformLocation(main_program, "skybox_texture"), 1);
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
+        glUniform1f(glGetUniformLocation(main_program, "time"), frame_begin_time);
 
         glDrawArrays(GL_POINTS, 0, 1);
 

@@ -11,11 +11,11 @@ struct Light {
     float intensity;
 };
 
-// layout (std430, binding = 1) readonly buffer light_buffer
-// {
-//     uint num_lights;
-//     Light lights[];
-// };
+layout (std430, binding = 1) readonly buffer light_buffer
+{
+    uint num_lights;
+    Light lights[];
+};
 
 in FRAG_IN {
     vec2 uv;
@@ -37,7 +37,8 @@ struct ObjectHit {
 #define PI 3.141592
 
 //#define VERY_SMALL_NUM 0.000000357635468273628 // unnecessarily small
-#define SMALL_NUM 0.000001
+#define SMALL_NUM 0.000015
+#define SHADOW_BIAS 0.0001
 
 #define MAX_PASS_THROUGH 10
 
@@ -51,6 +52,8 @@ uniform vec3 cam_for;
 
 // uniform sampler3D cube_density_texture;
 uniform samplerCube skybox_texture;
+
+uniform float time;
 
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim) {
     HitResult result;
@@ -242,6 +245,30 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
     return return_value;
 }
 
+vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
+    vec3 total = vec3(0.0);
+
+    uint light_count = 1;
+
+    Light la[1] = {
+        Light(vec3(5.0, 0.0, 0.0), 10.0)
+        // Light(vec3(sin(time * 5.0) * 5.0, 0.0, cos(time * 5.0) * 5.0), 10.0)
+    };
+
+    // for (uint i = 0; i < num_lights; i++){
+    for (uint i = 0; i < light_count; i++){
+        Light l = la[i];
+        vec3 light_dir = normalize(l.pos - point);
+        ObjectHit hit = intersect(point + normal * SHADOW_BIAS, light_dir);
+        if (hit.valid && hit.result.y > 0.0) continue;
+
+        float power = max(dot(light_dir, normal), 0.0) * l.intensity;
+        vec3 reflected = albedo / PI;
+        total += base_col * reflected * power;
+    }
+    return total;
+}
+
 vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
     vec3 color = vec3(0.0);
 
@@ -251,6 +278,7 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
         ObjectHit hit = intersect(ray_origin, ray_dir);
         vec3 hit_pos = ray_origin + ray_dir * hit.result.x;
         vec3 normal = vec3(0.0);
+        vec3 shading = vec3(0.0);
 
         switch (hit.object_type){
             case OBJECT_TYPE_SPHERE:
@@ -264,7 +292,10 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 
                 normal = (hit_pos - sphere_pos) / r;
 
-                color += vec3(normal / 2.0 + 0.5) * influence;
+                // vec3 c = texture(skybox_texture, reflect(ray_dir, normal)).rgb;
+
+                shading = shading_at_point(hit_pos, normal, vec3(1.0, 0.0, 0.0), vec3(0.18));
+                color += shading * influence;
                 influence = 0.0;
                 break;
 
@@ -301,7 +332,10 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 normal.y += pos[1] / abs(pos[1]) * int(highest_index == 1);
                 normal.z += pos[2] / abs(pos[2]) * int(highest_index == 2);
 
-                color += vec3(normal / 2.0 + 0.5) * influence;
+                // vec3 reflected_c = texture(skybox_texture, reflect(ray_dir, normal)).rgb;
+
+                shading = shading_at_point(hit_pos, normal, vec3(0.0, 1.0, 0.0), vec3(0.18));
+                color += shading * influence;
                 influence = 0.0;
                 break;
 
