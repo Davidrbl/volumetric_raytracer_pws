@@ -14,13 +14,15 @@
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
 #define MOUSE_SENSITIVITY .001f
-#define CAMERA_SPEED 1.f
+#define SCROLL_SPEED .5f
 
 #ifndef LOGLEVEL
 #define LOGLEVEL 0
 #endif
 
 #define PI 3.14159265f
+
+static float cam_speed = 1.f;
 
 union utof {
     u32 u;
@@ -39,6 +41,14 @@ static void framebuffer_resize_callback(
     int height
 ) {
     glViewport(0, 0, width, height);
+}
+
+static void scroll_callback(
+    GLFWwindow* window, // NOLINT(misc-unused-parameters)
+    double xoffset, // NOLINT(misc-unused-parameters)
+    double yoffset
+) {
+    cam_speed += (float)yoffset * SCROLL_SPEED;
 }
 #pragma GCC diagnostic pop
 
@@ -111,19 +121,19 @@ static inline void calc_movement(
     // W and S
     float mul = (float)(glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S));
 
-    cam_pos[0] += sinf(-cam_rot[1]) * mul * CAMERA_SPEED * dt;
-    cam_pos[2] += cosf(-cam_rot[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[0] += sinf(-cam_rot[1]) * mul * cam_speed * dt;
+    cam_pos[2] += cosf(-cam_rot[1]) * mul * cam_speed * dt;
 
     // A and D
     mul = (float)(glfwGetKey(window, GLFW_KEY_A) - glfwGetKey(window, GLFW_KEY_D));
 
-    cam_pos[0] += cosf(cam_rot[1]) * mul * CAMERA_SPEED * dt;
-    cam_pos[2] += sinf(cam_rot[1]) * mul * CAMERA_SPEED * dt;
+    cam_pos[0] += cosf(cam_rot[1]) * mul * cam_speed * dt;
+    cam_pos[2] += sinf(cam_rot[1]) * mul * cam_speed * dt;
 
     // Space and shift
     mul = (float)(glfwGetKey(window, GLFW_KEY_SPACE) - glfwGetKey(window, GLFW_KEY_LEFT_SHIFT));
 
-    cam_pos[1] += mul * CAMERA_SPEED * dt;
+    cam_pos[1] += mul * cam_speed * dt;
 
     float temp = cosf(cam_rot[0]);
 
@@ -161,6 +171,7 @@ int main() {
     if (glfwRawMouseMotionSupported()) {
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
+    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGL(glfwGetProcAddress)) {
         glfwDestroyWindow(window);
