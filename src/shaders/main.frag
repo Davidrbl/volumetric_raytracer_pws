@@ -13,8 +13,7 @@ struct Light {
 
 layout (std430, binding = 1) readonly buffer light_buffer
 {
-    uint num_lights;
-    Light lights[];
+    float lights[];
 };
 
 in FRAG_IN {
@@ -213,7 +212,7 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
         index += 6;
     }
 
-    uint vol_cube_count = uint(data[index]);
+    uint vol_cube_count = floatBitsToUint(data[index]);
     index++;
 
     for (int i = 0 ; i < vol_cube_count; i++){
@@ -248,16 +247,23 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
 vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
     vec3 total = vec3(0.0);
 
-    uint light_count = 1;
+    uint light_count = floatBitsToUint(lights[0]);
 
-    Light la[1] = {
-        Light(vec3(5.0, 0.0, 0.0), 10.0)
-        // Light(vec3(sin(time * 5.0) * 5.0, 0.0, cos(time * 5.0) * 5.0), 10.0)
-    };
+    //Light la[1] = {
+    //    Light(vec3(5.0, 0.0, 0.0), 10.0)
+    //    // Light(vec3(sin(time * 5.0) * 5.0, 0.0, cos(time * 5.0) * 5.0), 10.0)
+    //};
 
-    // for (uint i = 0; i < num_lights; i++){
+    //for (uint i = 0; i < num_lights; i++){
     for (uint i = 0; i < light_count; i++){
-        Light l = la[i];
+        Light l = {
+            vec3(
+                lights[i * 4 + 1],
+                lights[i * 4 + 2],
+                lights[i * 4 + 3]
+            ),
+            lights[i * 4 + 4]
+        };
         vec3 light_dir = normalize(l.pos - point);
         ObjectHit hit = intersect(point + normal * SHADOW_BIAS, light_dir);
         if (hit.valid && hit.result.y > 0.0) continue;

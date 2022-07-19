@@ -17,10 +17,15 @@
 #define CAMERA_SPEED 1.f
 
 #ifndef LOGLEVEL
-#define LOGLEVEL 1
+#define LOGLEVEL 0
 #endif
 
 #define PI 3.14159265f
+
+union utof {
+    u32 u;
+    float f;
+};
 
 static void error_callback(int error, const char* description) {
     tlog(5, "GLFW error: %d %s\n", error, description);
@@ -163,7 +168,7 @@ int main() {
         return 3;
     }
 
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
@@ -236,45 +241,45 @@ int main() {
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
 
-    float* test_buffer = malloc(test_buffer_size);
+    union utof* test_buffer = malloc(test_buffer_size);
 
     i64 index = 0;
-    test_buffer[index] = *(float*)&num_spheres;
+    test_buffer[index].u = num_spheres;
     index++;
 
     for (i64 i = 0; i < num_spheres; i++) {
-        test_buffer[index++] = (float)(i + 1);
-        test_buffer[index++] = (float)(i + 1);
-        test_buffer[index++] = (float)(i + 1);
-        test_buffer[index++] = .5f;
+        test_buffer[index++].f = (float)(i + 1);
+        test_buffer[index++].f = (float)(i + 1);
+        test_buffer[index++].f = (float)(i + 1);
+        test_buffer[index++].f = .5f;
     }
 
-    test_buffer[index] = *(float*)&num_cubes;
+    test_buffer[index].u = num_cubes;
     index++;
 
     for (i64 i = 0; i < num_cubes; i++) {
-        test_buffer[index++] = -(float)(i + 1);
-        test_buffer[index++] = (float)(i + 1);
-        test_buffer[index++] = (float)(i + 1);
-        test_buffer[index++] = .5f;
-        test_buffer[index++] = .5f;
-        test_buffer[index++] = .5f;
+        test_buffer[index++].f = -(float)(i + 1);
+        test_buffer[index++].f = (float)(i + 1);
+        test_buffer[index++].f = (float)(i + 1);
+        test_buffer[index++].f = .5f;
+        test_buffer[index++].f = .5f;
+        test_buffer[index++].f = .5f;
     }
 
-    test_buffer[index] = (float)num_vol_cubes;
+    test_buffer[index].u = num_vol_cubes;
     index++;
 
     for (i64 i = 0; i < num_vol_cubes; i++){
-        test_buffer[index++] = 0.0;
-        test_buffer[index++] = (float)(i+1);
-        test_buffer[index++] = 0.0;
+        test_buffer[index++].f = 0.f;
+        test_buffer[index++].f = (float)(i+1);
+        test_buffer[index++].f = 0.f;
 
-        test_buffer[index++] = .5;
-        test_buffer[index++] = .5;
-        test_buffer[index++] = .5;
+        test_buffer[index++].f = .5f;
+        test_buffer[index++].f = .5f;
+        test_buffer[index++].f = .5f;
 
-        test_buffer[index++] = 1.0 / (i + 1);
-        // test_buffer[index++] = 1.0;
+        test_buffer[index++].f = 1.f / (float)(i + 1);
+        // test_buffer[index++] = 1.f;
     }
 
     u32 objects_buffer = 0;
@@ -287,18 +292,22 @@ int main() {
 
     u32 num_lights = 1;
 
-    u32 lights_buffer_size = 1 * sizeof(u32) + num_lights * (4 * sizeof(float));
+    i64 lights_buffer_size = (1 + num_lights * 4) * (i64)sizeof(float);
 
-    float* lights_buffer_data = malloc(lights_buffer_size);
+    union utof* lights_buffer_data = malloc(lights_buffer_size);
 
     // index = 0;
-    lights_buffer_data[0] = *(float*)num_lights;
+    lights_buffer_data[0].u = num_lights;
 
     for (u32 i = 0; i < num_lights; i++){
-        lights_buffer_data[1+i * 4 + 0] = 0.0; // X pos
-        lights_buffer_data[1+i * 4 + 1] = 0.0; // Y pos
-        lights_buffer_data[1+i * 4 + 2] = 0.0; // Z pos
-        lights_buffer_data[1+i * 4 + 3] = 1.0; // Power
+        lights_buffer_data[1+i * 4 + 0].f = 5.f; // X pos
+        lights_buffer_data[1+i * 4 + 1].f = 0.f; // Y pos
+        lights_buffer_data[1+i * 4 + 2].f = 0.f; // Z pos
+        lights_buffer_data[1+i * 4 + 3].f = 10.f; // Power
+    }
+
+    for (u32 i = 0; i < lights_buffer_size/sizeof(float); i++) {
+        tlog(0, "0x%X --- %f --- %u\n", lights_buffer_data[i].u, lights_buffer_data[i].f, lights_buffer_data[i].u);
     }
 
     u32 lights_buffer = 0;
@@ -319,7 +328,7 @@ int main() {
         "textures/negative_z.jpg"
     };
 
-    u32 skybox_texture;
+    u32 skybox_texture = 0;
     create_cubemap(
         skybox_textures_paths,
         &skybox_texture
@@ -376,7 +385,7 @@ int main() {
         glUniform1i(glGetUniformLocation(main_program, "skybox_texture"), 1);
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
-        glUniform1f(glGetUniformLocation(main_program, "time"), frame_begin_time);
+        glUniform1f(glGetUniformLocation(main_program, "time"), (float)frame_begin_time);
 
         glDrawArrays(GL_POINTS, 0, 1);
 
