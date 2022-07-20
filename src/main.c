@@ -311,10 +311,10 @@ int main() {
     lights_buffer_data[0].u = num_lights;
 
     for (u32 i = 0; i < num_lights; i++){
-        lights_buffer_data[1+i * 4 + 0].f = 5.f; // X pos
-        lights_buffer_data[1+i * 4 + 1].f = 0.f; // Y pos
-        lights_buffer_data[1+i * 4 + 2].f = 0.f; // Z pos
-        lights_buffer_data[1+i * 4 + 3].f = 10.f; // Power
+        lights_buffer_data[1+i * 4 + 0].f = 1.0; // X pos
+        lights_buffer_data[1+i * 4 + 1].f = 0.5;//(float)i * 2.0; // Y pos
+        lights_buffer_data[1+i * 4 + 2].f = -1.0;//(float)i * 5.0; // Z pos
+        lights_buffer_data[1+i * 4 + 3].f = 1000000000000.f; // Power
     }
 
     for (u32 i = 0; i < lights_buffer_size/sizeof(float); i++) {
@@ -357,7 +357,7 @@ int main() {
     u32 cube_density_texture = 0;
     create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
 
-    float cam_pos[3] = {0.f};
+    float cam_pos[3] = {1.0, 0.f, -1.0};
     float cam_rot[2] = {0.f};
     float cam_for[3] = {0.f};
 

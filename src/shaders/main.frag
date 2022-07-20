@@ -54,6 +54,14 @@ uniform samplerCube skybox_texture;
 
 uniform float time;
 
+vec3 clamp_color(vec3 c){
+    return vec3(
+        clamp(c.x, 0.0, 1.0),
+        clamp(c.y, 0.0, 1.0),
+        clamp(c.z, 0.0, 1.0)
+    );
+}
+
 HitResult cube_intersect(vec3 ray_origin, vec3 ray_dir, vec3 cube_pos, vec3 cube_dim) {
     HitResult result;
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
@@ -249,12 +257,6 @@ vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
 
     uint light_count = floatBitsToUint(lights[0]);
 
-    //Light la[1] = {
-    //    Light(vec3(5.0, 0.0, 0.0), 10.0)
-    //    // Light(vec3(sin(time * 5.0) * 5.0, 0.0, cos(time * 5.0) * 5.0), 10.0)
-    //};
-
-    //for (uint i = 0; i < num_lights; i++){
     for (uint i = 0; i < light_count; i++){
         Light l = {
             vec3(
@@ -265,10 +267,33 @@ vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
             lights[i * 4 + 4]
         };
         vec3 light_dir = normalize(l.pos - point);
-        ObjectHit hit = intersect(point + normal * SHADOW_BIAS, light_dir);
+        vec3 ray_origin = point + normal * SHADOW_BIAS;
+        ObjectHit hit = intersect(ray_origin, light_dir);
+        float light_intensity_mul = 1.0;
+        while (hit.object_type == OBJECT_TYPE_VOL_CUBE){
+            switch (hit.object_type){
+                case OBJECT_TYPE_VOL_CUBE:
+                    float dist = hit.result.y - max(hit.result.x, 0.0);
+
+                    float half_thickness = data[hit.object_index + 6];
+
+                    float alpha = 1.0 - pow(0.5, dist / half_thickness);
+
+                    alpha = clamp(alpha, 0.0, 1.0);
+
+                    float next_depth = hit.result.y + SMALL_NUM;
+                    ray_origin += light_dir * next_depth;
+                    light_intensity_mul *= 1.0 - alpha;
+                    break;
+
+                default:
+                    break;
+            }
+            hit = intersect(ray_origin, light_dir);
+        }
         if (hit.valid && hit.result.y > 0.0) continue;
 
-        float power = max(dot(light_dir, normal), 0.0) * l.intensity;
+        float power = max(dot(light_dir, normal), 0.0) * l.intensity * light_intensity_mul;
         vec3 reflected = albedo / PI;
         total += base_col * reflected * power;
     }
@@ -301,7 +326,7 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 // vec3 c = texture(skybox_texture, reflect(ray_dir, normal)).rgb;
 
                 shading = shading_at_point(hit_pos, normal, vec3(1.0, 0.0, 0.0), vec3(0.18));
-                color += shading * influence;
+                color += clamp_color(shading) * influence;
                 influence = 0.0;
                 break;
 
@@ -341,7 +366,7 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 // vec3 reflected_c = texture(skybox_texture, reflect(ray_dir, normal)).rgb;
 
                 shading = shading_at_point(hit_pos, normal, vec3(0.0, 1.0, 0.0), vec3(0.18));
-                color += shading * influence;
+                color += clamp_color(shading) * influence;
                 influence = 0.0;
                 break;
 
