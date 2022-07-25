@@ -8,7 +8,7 @@ layout (std430, binding = 0) readonly buffer objects {
 
 struct Light {
     vec3 pos;
-    float intensity;
+    float power;
 };
 
 layout (std430, binding = 1) readonly buffer light_buffer
@@ -39,7 +39,7 @@ struct ObjectHit {
 #define SMALL_NUM 0.000015
 #define SHADOW_BIAS 0.0001
 
-#define MAX_PASS_THROUGH 10
+#define NUM_SAMPLE_STEPS 50
 
 #define OBJECT_TYPE_NONE        0
 #define OBJECT_TYPE_SPHERE      1
@@ -49,7 +49,7 @@ struct ObjectHit {
 uniform vec3 cam_origin;
 uniform vec3 cam_for;
 
-// uniform sampler3D cube_density_texture;
+uniform sampler3D cube_density_texture;
 uniform samplerCube skybox_texture;
 
 uniform float time;
@@ -252,12 +252,34 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
     return return_value;
 }
 
+float transmittance_through_vol_cube(vec3 begin, vec3 end, sampler3D density_texture){
+    float transmittance = 1.0;
+    float sample_length = length(begin - end) / (NUM_SAMPLE_STEPS + 1);
+    float max_density = 0.0;
+    for (uint i = 0; i <= NUM_SAMPLE_STEPS; i++){
+        vec3 sample_pos = mix(begin, end, i/NUM_SAMPLE_STEPS);
+
+        float density = texture(density_texture, sample_pos).x;
+        // Divide by max char value, we're storing char values
+
+        if (density > max_density) max_density = density;
+
+        const float funky_constant = 1.34; // weeee funkyyyy constannnntttttttt
+
+        float transmittance_part = pow(10, -density * sample_length * funky_constant);
+
+        transmittance *= transmittance_part;
+    }
+    return max_density;
+    return transmittance;
+}
+
 vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
     vec3 total = vec3(0.0);
 
-    uint light_count = floatBitsToUint(lights[0]);
+    uint dir_light_count = floatBitsToUint(lights[0]);
 
-    for (uint i = 0; i < light_count; i++){
+    for (uint i = 0; i < dir_light_count; i++){
         Light l = {
             vec3(
                 lights[i * 4 + 1],
@@ -270,7 +292,7 @@ vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
         vec3 ray_origin = point + normal * SHADOW_BIAS;
         ObjectHit hit = intersect(ray_origin, light_dir);
         float light_intensity_mul = 1.0;
-        while (hit.object_type == OBJECT_TYPE_VOL_CUBE){
+        while (hit.object_type == OBJECT_TYPE_VOL_CUBE && hit.result.x > 0.0){
             switch (hit.object_type){
                 case OBJECT_TYPE_VOL_CUBE:
                     float dist = hit.result.y - max(hit.result.x, 0.0);
@@ -291,12 +313,60 @@ vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
             }
             hit = intersect(ray_origin, light_dir);
         }
-        if (hit.valid && hit.result.y > 0.0) continue;
-
-        float power = max(dot(light_dir, normal), 0.0) * l.intensity * light_intensity_mul;
+        float r = length(l.pos - point);
+        if ((hit.valid && hit.result.x > 0.0) && hit.result.x < r) continue;
+        float power = max(dot(light_dir, normal), 0.0) * l.power * light_intensity_mul;
         vec3 reflected = albedo / PI;
         total += base_col * reflected * power;
     }
+
+    uint light_begin = 1+4*dir_light_count;
+    uint light_count = floatBitsToUint(lights[light_begin]);
+
+    for (uint i = 0; i < light_count; i++){
+        Light l = {
+            vec3(
+                lights[light_begin + i * 4 + 1],
+                lights[light_begin + i * 4 + 2],
+                lights[light_begin + i * 4 + 3]
+            ),
+            lights[light_begin + i * 4 + 4]
+        };
+        vec3 light_dir = normalize(l.pos - point);
+        vec3 ray_origin = point + normal * SHADOW_BIAS;
+        ObjectHit hit = intersect(ray_origin, light_dir);
+        float light_intensity_mul = 1.0;
+        while (hit.object_type == OBJECT_TYPE_VOL_CUBE && hit.result.x > 0.0){
+            switch (hit.object_type){
+                case OBJECT_TYPE_VOL_CUBE:
+                    float dist = hit.result.y - max(hit.result.x, 0.0);
+
+                    float half_thickness = data[hit.object_index + 6];
+
+                    float alpha = 1.0 - pow(0.5, dist / half_thickness);
+
+                    alpha = clamp(alpha, 0.0, 1.0);
+
+                    float next_depth = hit.result.y + SMALL_NUM;
+                    ray_origin += light_dir * next_depth;
+                    light_intensity_mul *= 1.0 - alpha;
+                    break;
+
+                default:
+                    break;
+            }
+            hit = intersect(ray_origin, light_dir);
+        }
+        float r = length(l.pos - point);
+        if ((hit.valid && hit.result.x > 0.0) && hit.result.x < r) continue;
+
+        // The only change between dir_lights and lights is that dir lights do not have an intensity falloff
+        // and lights do
+        float power = max(dot(light_dir, normal), 0.0) * l.power * light_intensity_mul / (4*PI*r*r);
+        vec3 reflected = albedo / PI;
+        total += base_col * reflected * power;
+    }
+
     return total;
 }
 
@@ -322,8 +392,6 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 float r = data[hit.object_index + 3];
 
                 normal = (hit_pos - sphere_pos) / r;
-
-                // vec3 c = texture(skybox_texture, reflect(ray_dir, normal)).rgb;
 
                 shading = shading_at_point(hit_pos, normal, vec3(1.0, 0.0, 0.0), vec3(0.18));
                 color += clamp_color(shading) * influence;
@@ -373,12 +441,35 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
             case OBJECT_TYPE_VOL_CUBE:
                 vec3 cube_col;
                 float alpha = 0.0;
-                cube_col = vec3(0.0, 0.0, 1.0);
-                float dist = hit.result.y - max(hit.result.x, 0.0); // Test value, we need to calculate this
+                cube_col = vec3(1.0);
+                // float dist = hit.result.y - max(hit.result.x, 0.0); // Test value, we need to calculate this
 
-                float half_thickness = data[hit.object_index + 6];
+                // float half_thickness = data[hit.object_index + 6];
 
-                alpha = 1.0 - pow(0.5, dist / half_thickness);
+                // alpha = 1.0 - pow(0.5, dist / half_thickness);
+
+                vec3 vol_cube_pos = vec3(
+                    data[hit.object_index + 0],
+                    data[hit.object_index + 1],
+                    data[hit.object_index + 2]
+                );
+
+                vec3 vol_cube_dim = vec3(
+                    data[hit.object_index + 3],
+                    data[hit.object_index + 4],
+                    data[hit.object_index + 5]
+                );
+
+                vec3 begin = ray_origin + max(hit.result.x, 0.0) * ray_dir - vol_cube_pos;
+                vec3 end = ray_origin + hit.result.y * ray_dir - vol_cube_pos;
+
+                begin /= vol_cube_dim;
+                end /= vol_cube_dim;
+
+                begin = begin / 2.0 + 0.5;
+                end = end / 2.0 + 0.5;
+
+                alpha = 1.0 - transmittance_through_vol_cube(begin, end, cube_density_texture);
 
                 alpha = clamp(alpha, 0.0, 1.0);
 
@@ -387,11 +478,11 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
 
                 color += cube_col * alpha * influence;        // This is the volumetric cube part
                 influence *= 1.0 - alpha;
-
                 break;
 
             case OBJECT_TYPE_NONE:
                 vec3 skybox_col = texture(skybox_texture, ray_dir).rgb;
+                // vec3 skybox_col = vec3(1.0);
                 color += skybox_col * influence;
                 influence = 0.0;
                 break;

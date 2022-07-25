@@ -80,7 +80,7 @@ void GLAPIENTRY gl_error_callback(
     }
 }
 
-static u8 texture_function(float x, float y, float z) {
+static float texture_function(float x, float y, float z) {
     x = x * 2.f - 1.f;
     y = y * 2.f - 1.f;
     z = z * 2.f - 1.f;
@@ -93,10 +93,12 @@ static u8 texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    dist *= (float)UINT8_MAX;
-    dist = (float)UINT8_MAX - dist;
+    return dist;
+}
 
-    return (u8)dist;
+static u8 another_texture_function(float x, float y, float z){
+    if (x > 0.5) return UINT8_MAX;
+    return UINT8_MAX/2;
 }
 
 static inline void calc_movement(
@@ -242,13 +244,13 @@ int main() {
         // Check if we have added everything needed for the framebuffer
 
         GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
-        tlog(0, "Framebufferstatus -> %X\n", status);
+        // tlog(0, "Framebufferstatus -> %X\n", status);
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
     }
 
     u32 num_spheres = 4;
     u32 num_cubes = 4;
-    u32 num_vol_cubes = 4;
+    u32 num_vol_cubes = 1;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
 
@@ -290,7 +292,7 @@ int main() {
         test_buffer[index++].f = .5f;
 
         test_buffer[index++].f = 1.f / (float)(i + 1);
-        // test_buffer[index++] = 1.f;
+        // test_buffer[index++].f = 1.f;
     }
 
     u32 objects_buffer = 0;
@@ -301,25 +303,35 @@ int main() {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
 
+    u32 num_dir_lights = 0;
     u32 num_lights = 1;
 
-    i64 lights_buffer_size = (1 + num_lights * 4) * (i64)sizeof(float);
+    i64 lights_buffer_size = (2 + num_dir_lights * 4 + num_lights * 4) * (i64)sizeof(float);
 
     union utof* lights_buffer_data = malloc(lights_buffer_size);
 
-    // index = 0;
-    lights_buffer_data[0].u = num_lights;
+    index = 0;
+    lights_buffer_data[index++].u = num_dir_lights;
+
+    for (u32 i = 0; i < num_dir_lights; i++){
+        lights_buffer_data[index++].f = 1.0; // X pos
+        lights_buffer_data[index++].f = 0.5;//(float)i * 2.0; // Y pos
+        lights_buffer_data[index++].f = -1.0;//(float)i * 5.0; // Z pos
+        lights_buffer_data[index++].f = 15.f; // Power
+    }
+
+    lights_buffer_data[index++].u = num_lights;
 
     for (u32 i = 0; i < num_lights; i++){
-        lights_buffer_data[1+i * 4 + 0].f = 1.0; // X pos
-        lights_buffer_data[1+i * 4 + 1].f = 0.5;//(float)i * 2.0; // Y pos
-        lights_buffer_data[1+i * 4 + 2].f = -1.0;//(float)i * 5.0; // Z pos
-        lights_buffer_data[1+i * 4 + 3].f = 1000000000000.f; // Power
+        lights_buffer_data[index++].f = 0.0;
+        lights_buffer_data[index++].f = (float)(i+2);
+        lights_buffer_data[index++].f = (float)(i+2);
+        lights_buffer_data[index++].f = 150.0;
     }
 
-    for (u32 i = 0; i < lights_buffer_size/sizeof(float); i++) {
-        tlog(0, "0x%X --- %f --- %u\n", lights_buffer_data[i].u, lights_buffer_data[i].f, lights_buffer_data[i].u);
-    }
+    // for (u32 i = 0; i < lights_buffer_size/sizeof(float); i++) {
+    //     tlog(0, "0x%X\t --- %f\t --- \t%u\n", lights_buffer_data[i].u, lights_buffer_data[i].f, lights_buffer_data[i].u);
+    // }
 
     u32 lights_buffer = 0;
 
@@ -355,9 +367,11 @@ int main() {
     float dt = 0.f; // delta-time
 
     u32 cube_density_texture = 0;
+    // create_texture3D(32, 32, 32, another_texture_function, &cube_density_texture);
     create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
+    glBindTextureUnit(0, cube_density_texture);
 
-    float cam_pos[3] = {1.0, 0.f, -1.0};
+    float cam_pos[3] = {1.0, 0.5f, -1.0};
     float cam_rot[2] = {0.f};
     float cam_for[3] = {0.f};
 
@@ -393,6 +407,7 @@ int main() {
 
         glUseProgram(main_program);
 
+        glUniform1i(glGetUniformLocation(main_program, "cube_density_texture"), 0);
         glUniform1i(glGetUniformLocation(main_program, "skybox_texture"), 1);
         glUniform3fv(glGetUniformLocation(main_program, "cam_origin"), 1, cam_pos);
         glUniform3fv(glGetUniformLocation(main_program, "cam_for"), 1, cam_for);
@@ -442,6 +457,27 @@ int main() {
             if (glfwGetKey(window, GLFW_KEY_T)) {
                 tlog(0, "time for frame: %f ms\n", (glfwGetTime() - time_begin) * 10.);
                 tlog(0, "\n");
+            }
+            if (glfwGetKey(window, GLFW_KEY_I)) {
+                tlog(0, "GL_VENDOR -> %s\n",    glGetString(GL_VENDOR));
+                tlog(0, "GL_RENDERER -> %s\n",  glGetString(GL_RENDERER));
+                tlog(0, "GL_VERSION -> %s\n",   glGetString(GL_VERSION));
+
+                GLint a;
+                glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &a);
+                tlog(0, "GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS -> %d\n", a);
+                tlog(0, "\n"); // david: kweenie waarom jij dit doet maar ik doe het ook wel
+
+            }
+            if (glfwGetKey(window, GLFW_KEY_R)){
+                create_program(
+                    "src/shaders/main.vert",
+                    NULL,
+                    NULL,
+                    "src/shaders/main.geom",
+                    "src/shaders/main.frag",
+                    &main_program
+                );
             }
             time_begin = glfwGetTime();
         }
