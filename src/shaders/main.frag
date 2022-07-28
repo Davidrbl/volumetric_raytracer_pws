@@ -256,10 +256,14 @@ float transmittance_through_vol_cube(vec3 begin, vec3 end, sampler3D density_tex
     float transmittance = 1.0;
     float sample_length = length(begin - end) / (NUM_SAMPLE_STEPS + 1);
     float max_density = 0.0;
+
+    vec3 sample_step = (end - begin) / NUM_SAMPLE_STEPS;
+    vec3 sample_pos = begin;
     for (uint i = 0; i <= NUM_SAMPLE_STEPS; i++){
-        vec3 sample_pos = mix(begin, end, i/NUM_SAMPLE_STEPS);
+        // vec3 sample_pos = mix(begin, end, i/NUM_SAMPLE_STEPS);
 
         float density = texture(density_texture, sample_pos).x;
+        // float density = sample_pos.x < 0.5 ? 0.5 : 1.0;
         // Divide by max char value, we're storing char values
 
         if (density > max_density) max_density = density;
@@ -269,8 +273,9 @@ float transmittance_through_vol_cube(vec3 begin, vec3 end, sampler3D density_tex
         float transmittance_part = pow(10, -density * sample_length * funky_constant);
 
         transmittance *= transmittance_part;
+        sample_pos += sample_step;
     }
-    return max_density;
+    // return max_density;
     return transmittance;
 }
 

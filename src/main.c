@@ -93,12 +93,14 @@ static float texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    return dist;
+    if (dist > 0.5) return 0.0;
+    else return 1.0;
+    // return dist;
 }
 
-static u8 another_texture_function(float x, float y, float z){
-    if (x > 0.5) return UINT8_MAX;
-    return UINT8_MAX/2;
+static float another_texture_function(float x, float y, float z){
+    if (x > 0.5) return 1.0;
+    return 0.5;
 }
 
 static inline void calc_movement(
@@ -243,7 +245,7 @@ int main() {
 
         // Check if we have added everything needed for the framebuffer
 
-        GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
+        // GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
         // tlog(0, "Framebufferstatus -> %X\n", status);
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
     }

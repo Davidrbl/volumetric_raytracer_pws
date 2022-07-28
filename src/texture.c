@@ -8,14 +8,14 @@
 
 void create_texture3D(
     i32 width, i32 height, i32 depth,
-    u8 (*function)(float x, float y, float z),
+    float (*function)(float x, float y, float z),
     u32* texture
 ) {
     glCreateTextures(GL_TEXTURE_3D, 1, texture);
 
-    glTextureStorage3D(*texture, 1, GL_R8, width, height, depth);
+    glTextureStorage3D(*texture, 1, GL_R32F, width, height, depth);
 
-    u8* tex_buf = malloc(width * height * depth); // * sizeof(u8) -> 1
+    float* tex_buf = malloc(width * height * depth * sizeof(float));
 
     for (i32 z = 0; z < depth; z++) {
         for (i32 y = 0; y < height; y++) {
@@ -36,7 +36,7 @@ void create_texture3D(
         0,                          // The texture level
         0, 0, 0,                    // x, y, z offsets
         width, height, depth,       // width, height and depth information
-        GL_RED, GL_UNSIGNED_BYTE,   // specify the types of the data, (these are fucky sometimes)
+        GL_RED, GL_FLOAT,           // specify the types of the data, (these are fucky sometimes)
         tex_buf                     // the actual data
     );
 
