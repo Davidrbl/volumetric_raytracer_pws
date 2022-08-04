@@ -429,7 +429,7 @@ vec4 col_through_vol_cube(
         
             // The henyey_greenstein phase function returns the factor of light
             // that will be reflected at the angle between the light and camera
-            const float g = 0.0; // some constant that changes the henyey_greenstein constant
+            const float g = 0.3; // some constant that changes the henyey_greenstein constant
             float HG_angle = dot(light_dir, -sample_step);
             float henyey_greenstein = 1 / (4*PI) * (1.0 - g*g) / pow(1 + g*g - 2*g * HG_angle, 1.5);
             

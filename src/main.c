@@ -93,6 +93,7 @@ static float texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
+    return 1.0;
     if (dist > 0.5) return 0.5;
     else return 1.0;
 }
@@ -310,9 +311,9 @@ int main() {
     lights_buffer_data[index++].u = num_dir_lights;
 
     for (u32 i = 0; i < num_dir_lights; i++){
-        lights_buffer_data[index++].f = 1.0; // X pos
-        lights_buffer_data[index++].f = 0.5;//(float)i * 2.0; // Y pos
-        lights_buffer_data[index++].f = -1.0;//(float)i * 5.0; // Z pos
+        lights_buffer_data[index++].f = cos(i) * 5.0; // X pos
+        lights_buffer_data[index++].f = sin(i) * 5.0 + 1.0;//(float)i * 2.0; // Y pos
+        lights_buffer_data[index++].f = -i;//(float)i * 5.0; // Z pos
         lights_buffer_data[index++].f = 15.f; // Power
     }
 
