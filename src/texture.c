@@ -40,12 +40,12 @@ void create_texture3D(
         tex_buf                     // the actual data
     );
 
-    glTextureParameteri(*texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(*texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(*texture, GL_TEXTURE_WRAP_R, GL_REPEAT);
+    glTextureParameteri(*texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(*texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(*texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    glTextureParameteri(*texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(*texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(*texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(*texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     free(tex_buf);
 }

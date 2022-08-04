@@ -93,14 +93,8 @@ static float texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    if (dist > 0.5) return 0.0;
+    if (dist > 0.5) return 0.5;
     else return 1.0;
-    // return dist;
-}
-
-static float another_texture_function(float x, float y, float z){
-    if (x > 0.5) return 1.0;
-    return 0.5;
 }
 
 static inline void calc_movement(
@@ -305,8 +299,8 @@ int main() {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, objects_buffer);
 
-    u32 num_dir_lights = 0;
-    u32 num_lights = 1;
+    u32 num_dir_lights = 1;
+    u32 num_lights = 0;
 
     i64 lights_buffer_size = (2 + num_dir_lights * 4 + num_lights * 4) * (i64)sizeof(float);
 
@@ -369,8 +363,7 @@ int main() {
     float dt = 0.f; // delta-time
 
     u32 cube_density_texture = 0;
-    // create_texture3D(32, 32, 32, another_texture_function, &cube_density_texture);
-    create_texture3D(32, 32, 32, texture_function, &cube_density_texture);
+    create_texture3D(128, 128, 128, texture_function, &cube_density_texture);
     glBindTextureUnit(0, cube_density_texture);
 
     float cam_pos[3] = {1.0, 0.5f, -1.0};
