@@ -94,7 +94,7 @@ static float texture_function(float x, float y, float z) {
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
     return 1.0;
-    if (dist > 0.5) return 0.5;
+    if (dist > 0.5) return 0.0;
     else return 1.0;
 }
 
@@ -247,7 +247,7 @@ int main() {
 
     u32 num_spheres = 4;
     u32 num_cubes = 4;
-    u32 num_vol_cubes = 1;
+    u32 num_vol_cubes = 3;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
 
@@ -289,7 +289,6 @@ int main() {
         test_buffer[index++].f = .5f;
 
         test_buffer[index++].f = 1.f / (float)(i + 1);
-        // test_buffer[index++].f = 1.f;
     }
 
     u32 objects_buffer = 0;
@@ -311,9 +310,9 @@ int main() {
     lights_buffer_data[index++].u = num_dir_lights;
 
     for (u32 i = 0; i < num_dir_lights; i++){
-        lights_buffer_data[index++].f = cos(i) * 5.0; // X pos
-        lights_buffer_data[index++].f = sin(i) * 5.0 + 1.0;//(float)i * 2.0; // Y pos
-        lights_buffer_data[index++].f = -i;//(float)i * 5.0; // Z pos
+        lights_buffer_data[index++].f = 3.0; // X pos
+        lights_buffer_data[index++].f = -3.0;//(float)i * 2.0; // Y pos
+        lights_buffer_data[index++].f = 0.0;//(float)i * 5.0; // Z pos
         lights_buffer_data[index++].f = 15.f; // Power
     }
 
