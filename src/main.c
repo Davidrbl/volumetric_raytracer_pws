@@ -11,6 +11,12 @@
 #include <standard_types.h>
 #include <texture.h>
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include <cimgui.h>
+#define CIMGUI_USE_GLFW
+#define CIMGUI_USE_OPENGL3
+#include <cimgui_impl.h>
+
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 1024
 #define MOUSE_SENSITIVITY .001f
@@ -188,6 +194,12 @@ int main() {
 
     glClearColor(1.f, 0.f, 1.f, 1.f);
 
+    ImGuiContext* ctx = igCreateContext(NULL);
+    ImGuiIO* io = igGetIO();
+    
+    igImplGlfw_InitForOpenGL(window, true);
+    igImplOpenGL3_Init("#version 330 core");
+    
     // Shader program setup
     u32 main_program = 0;
     create_program(
@@ -380,6 +392,7 @@ int main() {
     glBindVertexArray(vao);
 
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
         dt = (float)(frame_end_time - frame_begin_time);
         frame_begin_time = glfwGetTime();
 
@@ -425,7 +438,17 @@ int main() {
 
         glDrawArrays(GL_POINTS, 0, 1);
 
-        glfwPollEvents();
+
+        // imgui gui drawing
+        igImplOpenGL3_NewFrame();
+        igImplGlfw_NewFrame();
+        igNewFrame();
+        
+        igShowDemoWindow(NULL);
+        
+        igRender();
+        igImplOpenGL3_RenderDrawData(igGetDrawData());
+        
         glfwSwapBuffers(window);
 
         if (frame % 100 == 0) {
