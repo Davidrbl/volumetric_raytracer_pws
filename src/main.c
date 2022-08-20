@@ -172,7 +172,9 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_resize_callback);
 
     glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    u32 cursor_mode = GLFW_CURSOR_DISABLED;
+    glfwSetInputMode(window, GLFW_CURSOR, cursor_mode);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (glfwRawMouseMotionSupported()) {
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
@@ -259,7 +261,7 @@ int main() {
 
     u32 num_spheres = 4;
     u32 num_cubes = 4;
-    u32 num_vol_cubes = 3;
+    u32 num_vol_cubes = 1;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
 
@@ -390,6 +392,14 @@ int main() {
     u32 vao = 0;
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
+    
+    bool window_open = true;
+    
+    float sphere_example_data[4] = {0.0, 0.0, 0.0, 0.0};
+    float cube_example_data[6] = {
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0
+    };
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -399,7 +409,10 @@ int main() {
         mouse_x[1] = mouse_x[0];
         mouse_y[1] = mouse_y[0];
         glfwGetCursorPos(window, mouse_x, mouse_y);
-        calc_movement(window, cam_pos, cam_rot, cam_for, dt, mouse_x, mouse_y);
+        
+        if (cursor_mode == GLFW_CURSOR_DISABLED){
+            calc_movement(window, cam_pos, cam_rot, cam_for, dt, mouse_x, mouse_y);
+        }
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, 1);
@@ -438,12 +451,30 @@ int main() {
 
         glDrawArrays(GL_POINTS, 0, 1);
 
-
         // imgui gui drawing
         igImplOpenGL3_NewFrame();
         igImplGlfw_NewFrame();
         igNewFrame();
+      
+        igBegin("big fat cock and balls", &window_open, 0);
         
+        igText("dt: \t%f ms", dt*1000);
+        igText("fps: \t%f ms", 1/dt);
+        
+        // Sphere gui
+        igSliderFloat3("sphere pos", sphere_example_data, -10.0, 10.0, NULL, 0);
+        igSliderFloat("sphere radius", &sphere_example_data[3], 0.0, 10.0, NULL, 0);
+
+        igButton("Add Sphere", (ImVec2){100.0, 30.0});
+        
+        // Cube gui
+        igSliderFloat3("cube pos", cube_example_data, -10.0, 10.0, NULL, 0);
+        igSliderFloat3("cube dim", &cube_example_data[3], 0.0, 10.0, NULL, 0);
+
+        igButton("Add cube", (ImVec2){100.0, 30.0});
+        
+        igEnd();
+          
         igShowDemoWindow(NULL);
         
         igRender();
@@ -496,6 +527,15 @@ int main() {
                     "src/shaders/main.frag",
                     &main_program
                 );
+            }
+            if (glfwGetKey(window, GLFW_KEY_M)){
+                // NOTE: (david) could be done branchless, but this is more readable
+                if (cursor_mode == GLFW_CURSOR_NORMAL){
+                    cursor_mode = GLFW_CURSOR_DISABLED;
+                } else { // so cursor_mode == GLFW_CURSOR_DISABLED
+                    cursor_mode = GLFW_CURSOR_NORMAL;
+                }
+                glfwSetInputMode(window, GLFW_CURSOR, cursor_mode);
             }
             time_begin = glfwGetTime();
         }

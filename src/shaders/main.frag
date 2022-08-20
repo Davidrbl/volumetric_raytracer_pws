@@ -39,7 +39,7 @@ struct ObjectHit {
 #define SMALL_NUM 0.000015
 #define SHADOW_BIAS 0.0001
 
-#define NUM_SAMPLE_STEPS 40
+#define NUM_SAMPLE_STEPS 10
 #define NUM_IN_SCATTERING_SAMPLE_STEPS 10
 
 #define TRANSMITTANCE_MUL 1.0
@@ -354,6 +354,24 @@ ObjectHit intersect(vec3 ray_origin, vec3 ray_dir) {
 // }
 
 
+float transmittance_through_texture(vec3 uv_begin, vec3 uv_end, sampler3D density_texture){
+    float transmittance = 1.0;
+    float sample_length = length(uv_begin - uv_end) / NUM_SAMPLE_STEPS;
+
+    vec3 sample_step = (uv_end - uv_begin) / NUM_SAMPLE_STEPS;
+    vec3 sample_pos = uv_begin;
+    for (uint i = 0; i < NUM_SAMPLE_STEPS; i++){
+        float density = texture(density_texture, sample_pos).x;
+
+        float transmittance_part = pow(10, -density * sample_length);
+
+        transmittance *= transmittance_part;
+        sample_pos += sample_step;
+    }
+    return transmittance;
+}
+
+
 vec4 col_through_vol_cube(
     vec3 begin,
     vec3 end,
@@ -426,10 +444,46 @@ vec4 col_through_vol_cube(
             vec3 in_scat_uv_begin = sample_pos;
             vec3 in_scat_uv_end = sample_pos + light_dir * hit.result.y;
 
-            // TODO: (david) calculate the light intensity at in_scat_uv_end, so volumetric cubes and shadows
-            // are also taken into account with the in-scattering.
-            // this will probably be very expensive performance wise
+            float transmittance_to_sample_pos = 1.0;
+            vec3 light_ray_origin = sample_pos_world + light_dir * hit.result.y;
+            ObjectHit light_ray = intersect(sample_pos_world + light_dir * hit.result.y, light_dir);
+            while (light_ray.object_type == OBJECT_TYPE_VOL_CUBE && light_ray.result.x > 0.0){
+                switch (light_ray.object_type){
+                    case OBJECT_TYPE_VOL_CUBE:
+                        vec3 vol_cube_pos = vec3(
+                            data[light_ray.object_index + 0],
+                            data[light_ray.object_index + 1],
+                            data[light_ray.object_index + 2]
+                        );
 
+                        vec3 vol_cube_dim = vec3(
+                            data[light_ray.object_index + 3],
+                            data[light_ray.object_index + 4],
+                            data[light_ray.object_index + 5]
+                        );
+
+                        vec3 begin = light_ray_origin + max(light_ray.result.x, 0.0) * light_dir - vol_cube_pos;
+                        vec3 end = light_ray_origin +light_ray.result.y * light_dir - vol_cube_pos;
+
+                        begin /= vol_cube_dim;
+                        end /= vol_cube_dim;
+
+                        begin = begin / 2.0 + 0.5;
+                        end = end / 2.0 + 0.5;
+
+                        float alpha = 1.0 - transmittance_through_texture(begin, end, cube_density_texture);
+                        alpha = clamp(alpha, 0.0, 1.0);
+
+                        float next_depth = light_ray.result.y + SMALL_NUM;
+                        light_ray_origin += light_dir * next_depth;
+                        transmittance_to_sample_pos *= 1.0 - alpha;
+                        break;
+
+                    default:
+                        break;
+                }
+                light_ray= intersect(light_ray_origin, light_dir);
+            }
             vec3 in_scat_sample_pos = in_scat_uv_begin;
             vec3 in_scat_sample_step = (in_scat_uv_end - in_scat_uv_begin) / NUM_IN_SCATTERING_SAMPLE_STEPS;
 
@@ -452,12 +506,13 @@ vec4 col_through_vol_cube(
 
             // The henyey_greenstein phase function returns the factor of light
             // that will be reflected at the angle between the light and camera
-            const float g = 0.0; // some constant that changes the henyey_greenstein constant
+            const float g = 0.04; // some constant that changes the henyey_greenstein constant
             float HG_angle = dot(light_dir, -normalize(sample_step));
             float henyey_greenstein = 1 / (4*PI) * (1.0 - g*g) / pow(1 + g*g - 2*g * HG_angle, 1.5);
 
             vol_cube_col += vec3(1.0) * // Light color, always 1.0 with us
                             l.power * // divide this by 4*pi*r for normal lights
+                            transmittance_to_sample_pos *
                             in_scat_ray_transmittance *
                             henyey_greenstein * // Henyey greenstein phase function
                             transmittance * // The transmittance up to this point
@@ -469,24 +524,6 @@ vec4 col_through_vol_cube(
     }
     return vec4(vol_cube_col, 1.0 - transmittance);
 }
-
-float transmittance_through_texture(vec3 uv_begin, vec3 uv_end, sampler3D density_texture){
-    float transmittance = 1.0;
-    float sample_length = length(uv_begin - uv_end) / NUM_SAMPLE_STEPS;
-
-    vec3 sample_step = (uv_end - uv_begin) / NUM_SAMPLE_STEPS;
-    vec3 sample_pos = uv_begin;
-    for (uint i = 0; i < NUM_SAMPLE_STEPS; i++){
-        float density = texture(density_texture, sample_pos).x;
-
-        float transmittance_part = pow(10, -density * sample_length);
-
-        transmittance *= transmittance_part;
-        sample_pos += sample_step;
-    }
-    return transmittance;
-}
-
 vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
     vec3 total = vec3(0.0);
 
@@ -574,12 +611,34 @@ vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
         while (hit.object_type == OBJECT_TYPE_VOL_CUBE && hit.result.x > 0.0){
             switch (hit.object_type){
                 case OBJECT_TYPE_VOL_CUBE:
-                    float dist = hit.result.y - max(hit.result.x, 0.0);
+                    // float dist = hit.result.y - max(hit.result.x, 0.0);
 
-                    float half_thickness = data[hit.object_index + 6];
+                    // float half_thickness = data[hit.object_index + 6];
 
-                    float alpha = 1.0 - pow(0.5, dist / half_thickness);
+                    // float alpha = 1.0 - pow(0.5, dist / half_thickness);
 
+                    vec3 vol_cube_pos = vec3(
+                        data[hit.object_index + 0],
+                        data[hit.object_index + 1],
+                        data[hit.object_index + 2]
+                    );
+
+                    vec3 vol_cube_dim = vec3(
+                        data[hit.object_index + 3],
+                        data[hit.object_index + 4],
+                        data[hit.object_index + 5]
+                    );
+
+                    vec3 begin = ray_origin + max(hit.result.x, 0.0) * light_dir - vol_cube_pos;
+                    vec3 end = ray_origin + hit.result.y * light_dir - vol_cube_pos;
+
+                    begin /= vol_cube_dim;
+                    end /= vol_cube_dim;
+
+                    begin = begin / 2.0 + 0.5;
+                    end = end / 2.0 + 0.5;
+
+                    float alpha = 1.0 - transmittance_through_texture(begin, end, cube_density_texture);
                     alpha = clamp(alpha, 0.0, 1.0);
 
                     float next_depth = hit.result.y + SMALL_NUM;
