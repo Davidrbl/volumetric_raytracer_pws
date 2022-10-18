@@ -99,7 +99,7 @@ static float texture_function(float x, float y, float z) {
 
     dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    return 1.0;
+    // return 1.0;
     if (dist > 0.5) return 0.0;
     else return 1.0;
 }
@@ -198,10 +198,10 @@ int main() {
 
     ImGuiContext* ctx = igCreateContext(NULL);
     ImGuiIO* io = igGetIO();
-    
+
     igImplGlfw_InitForOpenGL(window, true);
     igImplOpenGL3_Init("#version 330 core");
-    
+
     // Shader program setup
     u32 main_program = 0;
     create_program(
@@ -392,9 +392,9 @@ int main() {
     u32 vao = 0;
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    
+
     bool window_open = true;
-    
+
     float sphere_example_data[4] = {0.0, 0.0, 0.0, 0.0};
     float cube_example_data[6] = {
         0.0, 0.0, 0.0,
@@ -409,7 +409,7 @@ int main() {
         mouse_x[1] = mouse_x[0];
         mouse_y[1] = mouse_y[0];
         glfwGetCursorPos(window, mouse_x, mouse_y);
-        
+
         if (cursor_mode == GLFW_CURSOR_DISABLED){
             calc_movement(window, cam_pos, cam_rot, cam_for, dt, mouse_x, mouse_y);
         }
@@ -455,31 +455,31 @@ int main() {
         igImplOpenGL3_NewFrame();
         igImplGlfw_NewFrame();
         igNewFrame();
-      
-        igBegin("big fat cock and balls", &window_open, 0);
-        
+
+        igBegin("debug window", &window_open, 0);
+
         igText("dt: \t%f ms", dt*1000);
-        igText("fps: \t%f ms", 1/dt);
-        
+        igText("fps: \t%f", 1/dt);
+
         // Sphere gui
         igSliderFloat3("sphere pos", sphere_example_data, -10.0, 10.0, NULL, 0);
         igSliderFloat("sphere radius", &sphere_example_data[3], 0.0, 10.0, NULL, 0);
 
         igButton("Add Sphere", (ImVec2){100.0, 30.0});
-        
+
         // Cube gui
         igSliderFloat3("cube pos", cube_example_data, -10.0, 10.0, NULL, 0);
         igSliderFloat3("cube dim", &cube_example_data[3], 0.0, 10.0, NULL, 0);
 
         igButton("Add cube", (ImVec2){100.0, 30.0});
-        
+
         igEnd();
-          
+
         igShowDemoWindow(NULL);
-        
+
         igRender();
         igImplOpenGL3_RenderDrawData(igGetDrawData());
-        
+
         glfwSwapBuffers(window);
 
         if (frame % 100 == 0) {

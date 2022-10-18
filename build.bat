@@ -20,5 +20,5 @@ cimgui/imgui_impl_glfw.o ^
 cimgui/imgui_impl_opengl3.o ^
 cimgui/imgui_tables.o ^
 cimgui/imgui_widgets.o ^
-glfw3.dll ^
+-lglfw3 ^
 -o main.exe
