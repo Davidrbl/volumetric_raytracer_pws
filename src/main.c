@@ -10,6 +10,7 @@
 #include <shader.h>
 #include <standard_types.h>
 #include <texture.h>
+#include <bmp_imp.h>
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
@@ -87,21 +88,23 @@ void GLAPIENTRY gl_error_callback(
 }
 
 static float texture_function(float x, float y, float z) {
-    x = x * 2.f - 1.f;
-    y = y * 2.f - 1.f;
-    z = z * 2.f - 1.f;
+    // x = x * 2.f - 1.f;
+    // y = y * 2.f - 1.f;
+    // z = z * 2.f - 1.f;
 
-    float dist = sqrtf(
-        x * x +
-        y * y +
-        z * z
-    );
+    // float dist = sqrtf(
+    //     x * x +
+    //     y * y +
+    //     z * z
+    // );
 
-    dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
+    // dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    // return 1.0;
-    if (dist > 0.5) return 0.0;
-    else return 1.0;
+    // // return 1.0;
+    // if (dist > 0.5) return 0.5;
+    // else return 1.0;
+    if (x > 0.5) return 0.5;
+    return 1.0;
 }
 
 static inline void calc_movement(
@@ -377,8 +380,110 @@ int main() {
     float dt = 0.f; // delta-time
 
     u32 cube_density_texture = 0;
-    create_texture3D(128, 128, 128, texture_function, &cube_density_texture);
+    // create_texture3D(128, 128, 128, texture_function, &cube_density_texture);
+
+    const char* addresses[] = {
+        "ct/i36.bmp",
+        "ct/i37.bmp",
+        "ct/i38.bmp",
+        "ct/i39.bmp",
+        "ct/i40.bmp",
+        "ct/i41.bmp",
+        "ct/i42.bmp",
+        "ct/i43.bmp",
+        "ct/i44.bmp",
+        "ct/i45.bmp",
+        "ct/i46.bmp",
+        "ct/i47.bmp",
+        "ct/i48.bmp",
+        "ct/i49.bmp",
+        "ct/i50.bmp",
+        "ct/i51.bmp",
+        "ct/i52.bmp",
+        "ct/i53.bmp",
+        "ct/i54.bmp",
+        "ct/i55.bmp",
+        "ct/i56.bmp",
+        "ct/i57.bmp",
+        "ct/i58.bmp",
+        "ct/i59.bmp",
+        "ct/i60.bmp",
+        "ct/i61.bmp",
+        "ct/i62.bmp",
+        "ct/i63.bmp",
+        "ct/i64.bmp",
+        "ct/i65.bmp",
+        "ct/i66.bmp",
+        "ct/i67.bmp",
+        "ct/i68.bmp",
+        "ct/i69.bmp",
+        "ct/i70.bmp",
+        "ct/i71.bmp",
+        "ct/i72.bmp",
+        "ct/i73.bmp",
+        "ct/i74.bmp",
+        "ct/i75.bmp",
+        "ct/i76.bmp",
+        "ct/i77.bmp",
+        "ct/i78.bmp",
+        "ct/i79.bmp",
+        "ct/i80.bmp",
+        "ct/i81.bmp",
+        "ct/i82.bmp",
+        "ct/i83.bmp",
+        "ct/i84.bmp",
+        "ct/i85.bmp",
+        "ct/i86.bmp",
+        "ct/i87.bmp",
+        "ct/i88.bmp",
+        "ct/i89.bmp",
+        "ct/i90.bmp",
+        "ct/i91.bmp",
+        "ct/i92.bmp",
+        "ct/i93.bmp",
+        "ct/i94.bmp",
+        "ct/i95.bmp",
+        "ct/i96.bmp",
+        "ct/i97.bmp",
+        "ct/i98.bmp",
+        "ct/i99.bmp",
+        "ct/i100.bmp",
+        "ct/i101.bmp",
+        "ct/i102.bmp"
+    };
+
+    u32 num_addresses = sizeof(addresses)/sizeof(char*);
+
+    u8* bitmap_data = NULL;
+    u32 bitmap_res = 0;
+    bmp_load(addresses, num_addresses, &bitmap_data, &bitmap_res);
+
+    printf("BMP loaded!\nBMP res -> %u\n", bitmap_res);
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &cube_density_texture);
+    glTextureStorage3D(
+        cube_density_texture, 1, GL_R8,
+        bitmap_res, bitmap_res, bitmap_res
+    );
+    glTextureSubImage3D(
+        cube_density_texture,
+        0,
+        0, 0, 0,
+        bitmap_res, bitmap_res, bitmap_res,
+        GL_RED, GL_UNSIGNED_BYTE,
+        bitmap_data
+    );
+
+    glTextureParameteri(cube_density_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(cube_density_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(cube_density_texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glTextureParameteri(cube_density_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(cube_density_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
     glBindTextureUnit(0, cube_density_texture);
+
+    free(bitmap_data);
 
     float cam_pos[3] = {1.0, 0.5f, -1.0};
     float cam_rot[2] = {0.f};

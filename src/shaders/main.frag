@@ -42,8 +42,9 @@ struct ObjectHit {
 #define NUM_SAMPLE_STEPS 40
 #define NUM_IN_SCATTERING_SAMPLE_STEPS 8
 
-#define TRANSMITTANCE_MUL 1.0
+#define TRANSMITTANCE_MUL 2.0
 #define IN_SCAT_MUL 0.7
+#define DENSITY_THRESHOLD 0.3
 
 #define OBJECT_TYPE_NONE        0
 #define OBJECT_TYPE_SPHERE      1
@@ -424,7 +425,7 @@ vec4 col_through_vol_cube(
             lights[index++]
         );
         for (uint j = 0; j <= NUM_SAMPLE_STEPS; j++){
-            float density = texture(density_texture, sample_pos).x;
+            float density = max(texture(density_texture, sample_pos).x - DENSITY_THRESHOLD, 0.0);
 
             float transmittance_part = pow(10, -density * sample_length * TRANSMITTANCE_MUL);
 

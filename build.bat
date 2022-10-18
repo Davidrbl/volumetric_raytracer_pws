@@ -5,6 +5,7 @@ gcc src/shader.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o ob
 gcc src/texture.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o object_files/texture.o
 gcc src/logging.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o object_files/logging.o
 gcc src/gl.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o object_files/gl.o
+gcc src/bmp_imp.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o object_files/bmp_imp.o
 
 g++ ^
 object_files/main.o ^
@@ -12,6 +13,7 @@ object_files/shader.o ^
 object_files/texture.o ^
 object_files/logging.o ^
 object_files/gl.o ^
+object_files/bmp_imp.o ^
 cimgui/cimgui.o ^
 cimgui/imgui.o ^
 cimgui/imgui_demo.o ^
