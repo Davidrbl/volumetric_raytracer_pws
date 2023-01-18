@@ -262,8 +262,8 @@ int main() {
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
     }
 
-    u32 num_spheres = 4;
-    u32 num_cubes = 4;
+    u32 num_spheres = 0;
+    u32 num_cubes = 0;
     u32 num_vol_cubes = 1;
 
     i64 test_buffer_size = (num_spheres * 4 + num_cubes * 6 + num_vol_cubes * 7 + 3) * (i64)sizeof(float); // for the split floats
@@ -330,7 +330,7 @@ int main() {
         lights_buffer_data[index++].f = 3.0; // X pos
         lights_buffer_data[index++].f = -3.0;//(float)i * 2.0; // Y pos
         lights_buffer_data[index++].f = 0.0;//(float)i * 5.0; // Z pos
-        lights_buffer_data[index++].f = 15.f; // Power
+        lights_buffer_data[index++].f = 150.f; // Power
     }
 
     lights_buffer_data[index++].u = num_lights;
@@ -463,13 +463,14 @@ int main() {
     glCreateTextures(GL_TEXTURE_3D, 1, &cube_density_texture);
     glTextureStorage3D(
         cube_density_texture, 1, GL_R8,
-        bitmap_res, bitmap_res, bitmap_res
+        bitmap_res, bitmap_res, num_addresses
     );
+
     glTextureSubImage3D(
         cube_density_texture,
         0,
         0, 0, 0,
-        bitmap_res, bitmap_res, bitmap_res,
+        bitmap_res, bitmap_res, num_addresses,
         GL_RED, GL_UNSIGNED_BYTE,
         bitmap_data
     );
@@ -588,6 +589,8 @@ int main() {
         glfwSwapBuffers(window);
 
         if (frame % 100 == 0) {
+            printf("dt: %f\n", dt*1000);
+
             if (glfwGetKey(window, GLFW_KEY_C)) {
                 tlog(
                     0,

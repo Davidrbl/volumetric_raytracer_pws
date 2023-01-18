@@ -31,8 +31,8 @@ void bmp_load(const char** addresses, uint32_t num_addresses, uint8_t** bitmap, 
         uint32_t res = (uint32_t)sqrt(map_size);
 
         if (!bitmap_initted){
-            // *bitmap = malloc(map_size * num_addresses);
-            *bitmap = malloc(res*res*res);
+            *bitmap = malloc(map_size * num_addresses);
+            // *bitmap = malloc(res*res*res);
             assert(*bitmap);
 
             *bmp_res = res;
@@ -40,11 +40,11 @@ void bmp_load(const char** addresses, uint32_t num_addresses, uint8_t** bitmap, 
             bitmap_initted = true;
         }
 
-        for (uint8_t j = 0; j < 7; j++){
-            fseek(fp, bmp_offset, SEEK_SET);
-            fread(*bitmap + insert_offset, map_size, sizeof(uint8_t), fp);
-            insert_offset += map_size;
-        }
+        // for (uint8_t j = 0; j < 7; j++){
+        fseek(fp, bmp_offset, SEEK_SET);
+        fread(*bitmap + insert_offset, map_size, sizeof(uint8_t), fp);
+        insert_offset += map_size;
+        // }
 
         // printf("file_size = %u\tbmp_offset = %u\tres = %u\n", file_size, bmp_offset, res);
 

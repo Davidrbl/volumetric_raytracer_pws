@@ -39,12 +39,12 @@ struct ObjectHit {
 #define SMALL_NUM 0.000015
 #define SHADOW_BIAS 0.0001
 
-#define NUM_SAMPLE_STEPS 40
-#define NUM_IN_SCATTERING_SAMPLE_STEPS 8
+#define NUM_SAMPLE_STEPS 100
+#define NUM_IN_SCATTERING_SAMPLE_STEPS 4
 
-#define TRANSMITTANCE_MUL 2.0
+#define TRANSMITTANCE_MUL 4.0
 #define IN_SCAT_MUL 0.7
-#define DENSITY_THRESHOLD 0.3
+#define DENSITY_THRESHOLD 0.6
 
 #define OBJECT_TYPE_NONE        0
 #define OBJECT_TYPE_SPHERE      1
@@ -440,7 +440,7 @@ vec4 col_through_vol_cube(
                 vec3(0.0), vol_cube_dim                                // Vol_cube data
             );
 
-            if (!hit.valid) return vec4(1.0, 0.0, 1.0, 1.0);
+            if (!hit.valid) return vec4(1.0, 0.0, 1.0, 1.0); // a very noticable color of purple, this condition should never be met
 
             vec3 in_scat_uv_begin = sample_pos;
             vec3 in_scat_uv_end = sample_pos + light_dir * hit.result.y;
@@ -485,13 +485,13 @@ vec4 col_through_vol_cube(
                 }
                 light_ray= intersect(light_ray_origin, light_dir);
             }
-            vec3 in_scat_sample_pos = in_scat_uv_begin;
+        vec3 in_scat_sample_pos = in_scat_uv_begin;
             vec3 in_scat_sample_step = (in_scat_uv_end - in_scat_uv_begin) / NUM_IN_SCATTERING_SAMPLE_STEPS;
 
             float optical_depth = 0.0;
 
-            for (uint k = 0; k < NUM_IN_SCATTERING_SAMPLE_STEPS; k++){
-                float in_scat_density = texture(density_texture, in_scat_sample_pos).x;
+            for (uint k = 0; k <= NUM_IN_SCATTERING_SAMPLE_STEPS; k++){
+                float in_scat_density = max(texture(density_texture, in_scat_sample_pos).x - DENSITY_THRESHOLD, 0.0);
                 optical_depth += in_scat_density;
                 in_scat_sample_pos += in_scat_sample_step;
             }
@@ -507,7 +507,8 @@ vec4 col_through_vol_cube(
 
             // The henyey_greenstein phase function returns the factor of light
             // that will be reflected at the angle between the light and camera
-            const float g = 0.04; // some constant that changes the henyey_greenstein constant
+            const float g = 0.03; // some constant that changes the henyey_greenstein constant
+            // float HG_angle = max(dot(light_dir, -normalize(sample_step)), 0.0);
             float HG_angle = dot(light_dir, -normalize(sample_step));
             float henyey_greenstein = 1 / (4*PI) * (1.0 - g*g) / pow(1 + g*g - 2*g * HG_angle, 1.5);
 
@@ -524,6 +525,7 @@ vec4 col_through_vol_cube(
         }
     }
     return vec4(vol_cube_col, 1.0 - transmittance);
+    // return vec4(transmittance.xxx, 1.0 - transmittance);
 }
 vec3 shading_at_point(vec3 point, vec3 normal, vec3 base_col, vec3 albedo){
     vec3 total = vec3(0.0);
@@ -781,8 +783,8 @@ vec3 ray_color(vec3 ray_origin, vec3 ray_dir){
                 break;
 
             case OBJECT_TYPE_NONE:
-                vec3 skybox_col = texture(skybox_texture, ray_dir).rgb;
-                // vec3 skybox_col = vec3(1.0);
+                // vec3 skybox_col = texture(skybox_texture, ray_dir).rgb;
+                vec3 skybox_col = vec3(0.0);
                 color += skybox_col * influence;
                 influence = 0.0;
                 break;
