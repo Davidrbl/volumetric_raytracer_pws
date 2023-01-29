@@ -88,23 +88,21 @@ void GLAPIENTRY gl_error_callback(
 }
 
 static float texture_function(float x, float y, float z) {
-    // x = x * 2.f - 1.f;
-    // y = y * 2.f - 1.f;
-    // z = z * 2.f - 1.f;
+    x = x * 2.f - 1.f;
+    y = y * 2.f - 1.f;
+    z = z * 2.f - 1.f;
 
-    // float dist = sqrtf(
-    //     x * x +
-    //     y * y +
-    //     z * z
-    // );
+    float dist = sqrtf(
+        x * x +
+        y * y +
+        z * z
+    );
 
-    // dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
+    dist /= sqrtf(3.f); // divide by maximum value, so dist is now from 0 to 1
 
-    // // return 1.0;
-    // if (dist > 0.5) return 0.5;
-    // else return 1.0;
-    if (x > 0.5) return 0.5;
-    return 1.0;
+    // return 1.0;
+    if (dist > 0.5) return 0.5;
+    else return 1.0;
 }
 
 static inline void calc_movement(
@@ -246,7 +244,7 @@ int main() {
         u32 renderbuffer = 0;
         // This is just a dummy thing, its sorta like a texture for depth and stencil,
         // but you cant read this and its faster.
-        // we dont want to read it anyway so this is cool.
+        // we dont want to read it anyway so this is good enough.
 
         glCreateRenderbuffers(1, &renderbuffer);
 
@@ -255,8 +253,7 @@ int main() {
         glNamedFramebufferTexture(framebuffer, GL_COLOR_ATTACHMENT0, framebuffer_texture, 0);
         glNamedFramebufferRenderbuffer(framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
 
-        // Check if we have added everything needed for the framebuffer
-
+        // to check if we have added everything needed for the framebuffer, we know that we build the framebuffer correctly, so we've commented it out
         // GLenum status = glCheckNamedFramebufferStatus(framebuffer, GL_FRAMEBUFFER);
         // tlog(0, "Framebufferstatus -> %X\n", status);
         // GL_FRAMEBUFFER_COMPLETE -> 8CD5
@@ -341,10 +338,6 @@ int main() {
         lights_buffer_data[index++].f = (float)(i+2);
         lights_buffer_data[index++].f = 150.0;
     }
-
-    // for (u32 i = 0; i < lights_buffer_size/sizeof(float); i++) {
-    //     tlog(0, "0x%X\t --- %f\t --- \t%u\n", lights_buffer_data[i].u, lights_buffer_data[i].f, lights_buffer_data[i].u);
-    // }
 
     u32 lights_buffer = 0;
 
