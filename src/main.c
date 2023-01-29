@@ -382,83 +382,35 @@ int main() {
     u32 cube_density_texture = 0;
     // create_texture3D(128, 128, 128, texture_function, &cube_density_texture);
 
-    const char* addresses[] = {
-        "ct/I36.bmp",
-        "ct/I37.bmp",
-        "ct/I38.bmp",
-        "ct/I39.bmp",
-        "ct/I40.bmp",
-        "ct/I41.bmp",
-        "ct/I42.bmp",
-        "ct/I43.bmp",
-        "ct/I44.bmp",
-        "ct/I45.bmp",
-        "ct/I46.bmp",
-        "ct/I47.bmp",
-        "ct/I48.bmp",
-        "ct/I49.bmp",
-        "ct/I50.bmp",
-        "ct/I51.bmp",
-        "ct/I52.bmp",
-        "ct/I53.bmp",
-        "ct/I54.bmp",
-        "ct/I55.bmp",
-        "ct/I56.bmp",
-        "ct/I57.bmp",
-        "ct/I58.bmp",
-        "ct/I59.bmp",
-        "ct/I60.bmp",
-        "ct/I61.bmp",
-        "ct/I62.bmp",
-        "ct/I63.bmp",
-        "ct/I64.bmp",
-        "ct/I65.bmp",
-        "ct/I66.bmp",
-        "ct/I67.bmp",
-        "ct/I68.bmp",
-        "ct/I69.bmp",
-        "ct/I70.bmp",
-        "ct/I71.bmp",
-        "ct/I72.bmp",
-        "ct/I73.bmp",
-        "ct/I74.bmp",
-        "ct/I75.bmp",
-        "ct/I76.bmp",
-        "ct/I77.bmp",
-        "ct/I78.bmp",
-        "ct/I79.bmp",
-        "ct/I80.bmp",
-        "ct/I81.bmp",
-        "ct/I82.bmp",
-        "ct/I83.bmp",
-        "ct/I84.bmp",
-        "ct/I85.bmp",
-        "ct/I86.bmp",
-        "ct/I87.bmp",
-        "ct/I88.bmp",
-        "ct/I89.bmp",
-        "ct/I90.bmp",
-        "ct/I91.bmp",
-        "ct/I92.bmp",
-        "ct/I93.bmp",
-        "ct/I94.bmp",
-        "ct/I95.bmp",
-        "ct/I96.bmp",
-        "ct/I97.bmp",
-        "ct/I98.bmp",
-        "ct/I99.bmp",
-        "ct/I100.bmp",
-        "ct/I101.bmp",
-        "ct/I102.bmp"
-    };
+    #define CT_COUNT_BEGIN 36
+    #define CT_COUNT_END 102
 
-    u32 num_addresses = sizeof(addresses)/sizeof(char*);
+    // we define these so the addresses array will have a constant size for the compiler, to avoid variable length arrays
 
-    u8* bitmap_data = NULL;
-    u32 bitmap_res = 0;
+    char* addresses[CT_COUNT_END - CT_COUNT_BEGIN + 1];
+
+    uint32_t num_addresses = CT_COUNT_END-CT_COUNT_BEGIN + 1;
+
+    uint32_t address_str_len = sizeof("ct/IXXX.bmp")/sizeof(char);
+
+    for (uint32_t ct_count = CT_COUNT_BEGIN; ct_count <= CT_COUNT_END; ct_count++)
+    {
+        uint32_t i = ct_count - CT_COUNT_BEGIN;
+
+        addresses[i] = calloc(address_str_len, sizeof(char));
+
+        sprintf(addresses[i], "ct/I%u.bmp", ct_count);
+    }
+
+    uint8_t* bitmap_data = NULL;
+    uint32_t bitmap_res = 0;
     bmp_load(addresses, num_addresses, &bitmap_data, &bitmap_res);
+    printf("Loaded bmp succesfully!\nres = %u\n", bitmap_res);
 
-    printf("BMP loaded!\nBMP res -> %u\n", bitmap_res);
+    for (uint32_t i = 0; i <= CT_COUNT_END - CT_COUNT_BEGIN; i++)
+    {
+        free(addresses[i]);
+    }
 
     glCreateTextures(GL_TEXTURE_3D, 1, &cube_density_texture);
     glTextureStorage3D(
