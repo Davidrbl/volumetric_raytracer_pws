@@ -1,3 +1,6 @@
+/**
+ * SPDX-License-Identifier: (WTFPL OR CC0-1.0) AND Apache-2.0
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +45,7 @@ int GLAD_GL_VERSION_4_6 = 0;
 
 
 static void _pre_call_gl_callback_default(const char *name, GLADapiproc apiproc, int len_args, ...) {
-    (void) len_args;
+    GLAD_UNUSED(len_args);
 
     if (apiproc == NULL) {
         fprintf(stderr, "GLAD: ERROR %s is NULL!\n", name);
@@ -58,9 +61,9 @@ static void _pre_call_gl_callback_default(const char *name, GLADapiproc apiproc,
 static void _post_call_gl_callback_default(void *ret, const char *name, GLADapiproc apiproc, int len_args, ...) {
     GLenum error_code;
 
-    (void) ret;
-    (void) apiproc;
-    (void) len_args;
+    GLAD_UNUSED(ret);
+    GLAD_UNUSED(apiproc);
+    GLAD_UNUSED(len_args);
 
     error_code = glad_glGetError();
 
@@ -6109,9 +6112,9 @@ static int glad_gl_get_extensions( int version, const char **out_exts, unsigned 
 #if GLAD_GL_IS_SOME_NEW_VERSION
     if(GLAD_VERSION_MAJOR(version) < 3) {
 #else
-    (void) version;
-    (void) out_num_exts_i;
-    (void) out_exts_i;
+    GLAD_UNUSED(version);
+    GLAD_UNUSED(out_num_exts_i);
+    GLAD_UNUSED(out_exts_i);
 #endif
         if (glad_glGetString == NULL) {
             return 0;
@@ -6203,7 +6206,7 @@ static int glad_gl_find_extensions_gl( int version) {
     char **exts_i = NULL;
     if (!glad_gl_get_extensions(version, &exts, &num_exts_i, &exts_i)) return 0;
 
-    (void) glad_gl_has_extension;
+    GLAD_UNUSED(glad_gl_has_extension);
 
     glad_gl_free_extensions(exts_i, num_exts_i);
 

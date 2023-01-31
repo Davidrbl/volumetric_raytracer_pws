@@ -1,26 +1,27 @@
 :: gcc src/main.c src/shader.c src/texture.c src/logging.c src/gl.c glfw3.dll -o main.exe -I include -std=c17 -Wall -Wextra -Wpedantic
 
-gcc src/main.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/main.o
-gcc src/shader.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/shader.o
-gcc src/texture.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/texture.o
-gcc src/logging.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/logging.o
-gcc src/gl.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/gl.o
-gcc src/bmp_imp.c -c -I include -I cimgui -std=c17 -Wall -Wextra -Wpedantic -o obj/bmp_imp.o
+mkdir build\src
+
+gcc src/main.c -c -I include -std=c17 -Wall -Wextra -Wpedantic -o build/src/main.c.o
+gcc src/shader.c -c -I include -std=c17 -Wall -Wextra -Wpedantic -o build/src/shader.c.o
+gcc src/texture.c -c -I include -std=c17 -Wall -Wextra -Wpedantic -o build/src/texture.c.o
+gcc src/logging.c -c -I include -std=c17 -Wall -Wextra -Wpedantic -o build/src/logging.c.o
+gcc src/bmp_imp.c -c -I include -std=c17 -Wall -Wextra -Wpedantic -o build/src/bmp_imp.c.o
 
 g++ ^
-obj/main.o ^
-obj/shader.o ^
-obj/texture.o ^
-obj/logging.o ^
-obj/gl.o ^
-obj/bmp_imp.o ^
-obj/cimgui.o ^
-obj/imgui.o ^
-obj/imgui_demo.o ^
-obj/imgui_draw.o ^
-obj/imgui_impl_glfw.o ^
-obj/imgui_impl_opengl3.o ^
-obj/imgui_tables.o ^
-obj/imgui_widgets.o ^
+build/src/main.c.o ^
+build/src/shader.c.o ^
+build/src/texture.c.o ^
+build/src/logging.c.o ^
+build/src/bmp_imp.c.o ^
+build/libs/gl.c.o ^
+build/libs/cimgui.cpp.o ^
+build/libs/imgui.cpp.o ^
+build/libs/imgui_demo.cpp.o ^
+build/libs/imgui_draw.cpp.o ^
+build/libs/imgui_impl_glfw.cpp.o ^
+build/libs/imgui_impl_opengl3.cpp.o ^
+build/libs/imgui_tables.cpp.o ^
+build/libs/imgui_widgets.cpp.o ^
 -lglfw3 ^
 -o main.exe

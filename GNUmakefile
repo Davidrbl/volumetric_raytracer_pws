@@ -1,25 +1,25 @@
 .PHONY: all clean run debug
 
+PROJECT := volumetric-ray-tracer
+VERSION := 0.1.0
+
 CC := clang
 CXX := clang++
 DEBUGGER := lldb
 MKDIR := mkdir -p
 SRCDIR := src
-OBJDIR := obj
-DEPDIR := dep
-INCDIR := include
-CSRCS := $(wildcard $(SRCDIR)/*.c)
-CXXSRCS := $(wildcard $(SRCDIR)/*.cpp)
-OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(CSRCS:.c=.o)) \
-        $(subst $(SRCDIR)/,$(OBJDIR)/,$(CXXSRCS:.cpp=.o))
-DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(CSRCS:.c=.d)) \
-        $(subst $(SRCDIR)/,$(DEPDIR)/,$(CXXSRCS:.cpp=.d))
-BIN ?= main
+LIBDIR := libs
+BUILDDIR := build
+INCDIRS := include
+SRCS := $(shell find $(SRCDIR) $(LIBDIR) -type f -name '*.c' -o -name '*.cpp')
+OBJS := $(SRCS:%=$(BUILDDIR)/%.o)
+DEPS := $(SRCS:%=$(BUILDDIR)/%.d)
+BIN := $(BUILDDIR)/$(PROJECT)-$(VERSION)
 
-CPPFLAGS := -I$(INCDIR) $(CPPFLAGS)
-CFLAGS := -Wall -Wextra -Wpedantic -pipe -std=c17 $(CFLAGS)
-CXXFLAGS := -Wall -Wextra -Wpedantic -pipe -std=c++20 $(CXXFLAGS)
-LDFLAGS := -fuse-ld=lld -lm $(LDFLAGS)
+CPPFLAGS := $(foreach INCDIR,$(INCDIRS),-I $(INCDIR)) $(CPPFLAGS)
+CFLAGS := -pipe $(CFLAGS)
+CXXFLAGS := -pipe $(CXXFLAGS)
+LDFLAGS := -fuse-ld=mold -lm $(LDFLAGS)
 
 LIBS := glfw3
 
@@ -37,9 +37,12 @@ LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 endif
 
-DEBUGFLAGS ?= -g -glldb
+OWNCFLAGS ?= -std=c17 -Wall -Wextra -Wpedantic
+OWNCXXFLAGS ?= -std=c++20 -Wall -Wextra -Wpedantic
+DEBUGFLAGS ?= -g
 SANFLAGS ?= -fsanitize=undefined,address
-OPTIFLAGS ?= -flto=thin -O2
+OPTIFLAGS ?= -O2
+LTOFLAGS ?= -flto
 STATICFLAGS ?= -static
 
 ifeq ($(strip $(DEBUG)),1)
@@ -54,38 +57,51 @@ ifeq ($(strip $(OPTI)),1)
 CFLAGS += $(OPTIFLAGS)
 CXXFLAGS += $(OPTIFLAGS)
 endif
+ifeq ($(strip $(LTO)),1)
+CFLAGS += $(LTOFLAGS)
+CXXFLAGS += $(LTOFLAGS)
+endif
 ifeq ($(strip $(STATIC)),1)
 LDFLAGS += $(STATICFLAGS)
 endif
 
 all: $(BIN)
 
-$(DEPDIR)/%.d: $(SRCDIR)/%.c
-	@$(MKDIR) "$(DEPDIR)"
-	@$(CC) $(CPPFLAGS) -MM "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o: ,g' > "$@"
+$(BUILDDIR)/%.c.d: %.c
+	@$(MKDIR) $(@D)
+	@$(CC) $(CPPFLAGS) -MM $< | sed 's,$(*F)\.o[: ]*,$(BUILDDIR)/$<.o $(BUILDDIR)/$<.d: ,g' > $@
 
-$(DEPDIR)/%.d: $(SRCDIR)/%.cpp
-	@$(MKDIR) "$(DEPDIR)"
-	@$(CXX) $(CPPFLAGS) -MM "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o: ,g' > "$@"
+$(BUILDDIR)/%.cpp.d: %.cpp
+	@$(MKDIR) $(@D)
+	@$(CXX) $(CPPFLAGS) -MM $< | sed 's,$(*F)\.o[: ]*,$(BUILDDIR)/$<.o $(BUILDDIR)/$<.d: ,g' > $@
 
 include $(DEPS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@$(MKDIR) "$(OBJDIR)"
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c "$<" -o "$@"
+$(BUILDDIR)/$(SRCDIR)/%.c.o: $(SRCDIR)/%.c
+	@$(MKDIR) $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(OWNCFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	@$(MKDIR) "$(OBJDIR)"
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c "$<" -o "$@"
+$(BUILDDIR)/$(SRCDIR)/%.cpp.o: $(SRCDIR)/%.cpp
+	@$(MKDIR) $(@D)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(OWNCXXFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(LIBDIR)/%.c.o: $(LIBDIR)/%.c
+	@$(MKDIR) $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/$(LIBDIR)/%.cpp.o: $(LIBDIR)/%.cpp
+	@$(MKDIR) $(@D)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(BIN): $(OBJS)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) $(CXXFLAGS) $(LDFLAGS) $^ -o "$@"
+	@$(MKDIR) $(@D)
+	$(CXX) $(CPPFLAGS) $(CFLAGS) $(CXXFLAGS) $(OWNCFLAGS) $(OWNCXXFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
-	$(RM) $(OBJDIR)/*.o $(DEPDIR)/*.d $(BIN)
+	@$(RM) $(shell find $(BUILDDIR) -type f -name '*.o' -o -name '*.d') $(BIN)
 
 run: $(BIN)
-	@./$(BIN) $(ARGS)
+	./$(BIN) $(ARGS)
 
 debug: $(BIN)
 	@$(DEBUGGER) ./$(BIN)

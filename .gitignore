@@ -1,5 +1,5 @@
+/build/
 /main*
-/dep/
-/obj/
+/imgui.ini
 /glfw3.dll
 /include/glfw/

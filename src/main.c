@@ -148,7 +148,7 @@ static inline void calc_movement(
     cam_for[2] = cosf(cam_rot[1]) * temp;
 }
 
-int main() {
+int main(void) {
     tlog_init(LOGLEVEL, stderr);
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()) {
@@ -197,8 +197,7 @@ int main() {
 
     glClearColor(1.f, 0.f, 1.f, 1.f);
 
-    ImGuiContext* ctx = igCreateContext(NULL);
-    ImGuiIO* io = igGetIO();
+    igCreateContext(NULL);
 
     igImplGlfw_InitForOpenGL(window, true);
     igImplOpenGL3_Init("#version 330 core");
